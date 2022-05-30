@@ -1,0 +1,4 @@
+{
+    "exclude": ["**/*.compy"],
+    "ignore": ["**/*.compy"]
+}

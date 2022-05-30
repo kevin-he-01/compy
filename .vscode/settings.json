@@ -1,0 +1,9 @@
+{
+    "python.analysis.typeCheckingMode": "strict",
+    "files.associations": {
+        "*.compy": "python"
+    },
+    "terminal.integrated.env.linux": {
+        "PATH": "${workspaceFolder}/bin:${env:PATH}"
+    }
+}
