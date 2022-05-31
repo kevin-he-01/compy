@@ -16,7 +16,20 @@ class Statement:
 class Expression(Statement):
     pass
 
-# Begin concrete AST nodes
+# Begin concrete AST statements
+
+@dataclass
+class Binding(Statement):
+    mutable: bool
+    name: ID
+    init_val: Expression
+
+@dataclass
+class Assignment(Statement):
+    name: ID
+    src: Expression
+
+# Begin concrete AST expressions
 
 @dataclass
 class Name(Expression):
@@ -27,11 +40,14 @@ class Integer(Expression):
     value: int
 
 class UnaryOp(Enum):
-    ADD1 = 1
-    SUB1 = 2
+    NEGATE = 0
+    PRINT = 1 # For now, will make it a function later
+    ADD1 = 2
+    SUB1 = 3
 
 @dataclass
 class Prim1(Expression):
     op: UnaryOp
+    ex1: Expression
 
 SL = List[Statement]
