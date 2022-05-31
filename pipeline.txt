@@ -1,0 +1,8 @@
+Code
+>-parse-> Python AST
+>-convert-> Bare AST
+>-check-> Bare AST
+>-anf-> ANF AST
+>-code-> Assembly file
+>-nasm-> Object file
+>-link-> ELF binary

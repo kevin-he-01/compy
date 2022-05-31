@@ -1,5 +1,3 @@
-from . import gl, a
+from . import start
 
-
-print('Global:', gl)
-print('Global:', a.a)
+start()

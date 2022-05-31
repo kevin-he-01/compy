@@ -1,4 +1,1 @@
-#! /bin/bash
-
-cd "$(dirname -- "${BASH_SOURCE[0]}")/.." || exit
-python3 -m compy
+../run.py
