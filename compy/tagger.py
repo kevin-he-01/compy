@@ -80,6 +80,6 @@ class VariableTagger(NodeWalker[VariableContext]):
                 node.info = info
                 if not info.mutable:
                     self.state.err(ImmutableVarError(name, span))
-            # TODO: case FunctionDef(): clone and change ctx.current_func_id
+            # TODO: case <function definition>: clone and change ctx.current_func_id
             case _:
                 super().walk(node, ctx)

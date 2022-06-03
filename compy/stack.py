@@ -1,12 +1,15 @@
-# Stack allocator
-
 from dataclasses import dataclass
+from typing import List
+from compy.common import CompiledFunction
+
+from compy.syntax import Binding, Node, NodeWalker, Scope
 
 
+# x86-64 System V ABI requires 16-byte alignment of the stack
 STACK_ALIGNMENT = 16
 
 @dataclass
-class Position:
+class StackPosition:
     alloc: 'StackAllocator'
     pos: int = 0
 
@@ -18,13 +21,40 @@ class Position:
     def stack_requirement(self) -> int:
         return -(self.pos - self.pos % STACK_ALIGNMENT)
     
-    def fork(self) -> 'Position':
-        return Position(self.alloc, self.pos)
+    # Shallow copy with same allocator but separate position
+    def fork(self) -> 'StackPosition':
+        return StackPosition(self.alloc, self.pos)
 
 class StackAllocator:
     space: int = 0
     def __init__(self) -> None:
-        self.root = Position(self) # The root scope position
+        self.root = StackPosition(self) # The root scope position
     
     def require_minimum_space(self, minimum: int):
         self.space = max(self.space, minimum)
+
+# TODO: change to 16 to add type information
+SIZE_UNTYPED = 8
+
+class AllocationWalker(NodeWalker[StackPosition]):
+    def walk(self, node: Node, ctx: StackPosition):
+        match node:
+            case Scope(info=info):
+                assert info != None, 'Untagged scope'
+                assert info.funcs == [], 'TBD: support function closure as variable names'
+                # TODO: allocate space for function closure names as well
+                super().walk(node, ctx.fork())
+            case Binding(info=info):
+                assert info != None, 'Untagged binding'
+                super().walk(node, ctx)
+                # For now, assume everything is untyped
+                info.stack_offset = ctx.allocate(SIZE_UNTYPED)
+            # TODO: avoid descending down a function declaration (keep everything under one function)
+            case _:
+                super().walk(node, ctx)
+
+def allocate_stack(funcs: List[CompiledFunction]):
+    for func in funcs:
+        alloc = StackAllocator()
+        AllocationWalker().walk(func.body, alloc.root)
+        func.stack_usage = alloc.space

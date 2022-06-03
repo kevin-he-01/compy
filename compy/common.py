@@ -20,20 +20,14 @@ class CompilerInfo:
     out_path: str
     state: CompilerState = field(default_factory=lambda: CompilerState())
 
-# next_function_id = 0
-
-# def gen_function_id() -> int:
-#     global next_function_id
-#     next_function_id += 1
-#     return next_function_id
-
 # A function to be compiled by the compiler 
 @dataclass
 class CompiledFunction:
     symbol: str
     body: 'compy.syntax.Scope'
     id: int
-    # id: int = field(default_factory=gen_function_id)
+    stack_usage: int | None = None
+    # id should originate from the function declaration node in the AST
 
 @dataclass
 class SourceSpan:

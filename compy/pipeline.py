@@ -1,6 +1,7 @@
 from pprint import pprint
 import compy.parser
 import compy.tagger
+import compy.stack
 from compy.common import CompileError, CompilerInfo, report_error
 
 
@@ -15,17 +16,21 @@ def run(info: CompilerInfo):
     # TODO: run checker (Ex. number too large)
     print('***DEBUG BARE AST***')
     pprint(top)
-    compy.tagger.tag(info.state, top)
+    funcs = compy.tagger.tag(info.state, top)
     print('***DEBUG TAGGED AST***')
     pprint(top)
 
+    # Process diagnostics
     if (errors := info.state.errors):
         for err in errors:
             report_error(info, code, err)
         raise errors[0] # Abort
     # TODO: report warnings but don't terminate
 
-    # The following steps SHOULD NOT fail!
+    # All steps starting now SHOULD NOT fail!
     # TODO: run ANF
-    # TODO: run stack allocation
+    compy.stack.allocate_stack(funcs)
+    print('***DEBUG POST STACK PROCESSING***')
+    pprint(funcs)
     # TODO: compile
+    # TODO: assemble & link

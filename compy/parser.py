@@ -42,7 +42,6 @@ def parse_assignment(span_stmt: SourceSpan, target: ast.expr, src: ast.expr) -> 
         case _:
             raise CompileError(msg="Cannot assign to this target", span=span_ast(target))
 
-
 def parse_stmt_expr(span_stmt: SourceSpan, ex: ast.expr) -> Statement:
     match ex:
         case ast.Call(func=ast.Name(id=(kw.VAL | kw.VAR as ty)), args=[], keywords=[ast.keyword(arg=name, value=ex) as keyword]):

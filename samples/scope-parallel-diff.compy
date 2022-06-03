@@ -1,0 +1,6 @@
+with _:
+    var(x = 42)
+    x
+with _:
+    var(y = 123)
+    y
