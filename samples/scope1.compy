@@ -1,0 +1,7 @@
+var(x = 4)
+x = 6
+with _:
+    val(c = x)
+    print(c)
+    print(x)
+print(x)

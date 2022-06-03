@@ -1,0 +1,81 @@
+Scoping rules for functions:
+
+- all functions with the same nearest scope S, essentially declared AS SOON AS the S starts and lives until the S end
+- Illegal to have two functions of the same name having the same nearest scope
+Ex. {
+    fn a() {}
+    fn a() {}
+}
+HOWEVER, shadowing with different nearest scopes are allowed
+Same behavior as Rust
+
+example:
+{
+    outer S declared
+    call S() // valid, even though S is declared down
+    {
+        A, B essentially declared automatically by compiler
+        A() {
+            call B() // Valid
+        }
+        B() {
+            call A() // Valid
+        }
+        call S() // Valid since S is declared in a scope outside
+        A, B ends
+    }
+    {
+        A, <inner S> declared
+        call S() // calls the INNER S, unlike other S() calls
+        // This is a different A since it lives in a different scope
+        A() {}
+        S() {} // This shadows the S outside
+        A, <inner S> ends
+        call S() // calls the INNER S, unlike other S() calls
+    }
+    call S() // valid
+    S() {}
+    call S() // valid
+    outer S ends
+}
+
+fn example() {
+    s();
+    {
+        fn a() { b(); }
+        fn b() { a(); }
+        s();
+    }
+    {
+        s();
+        fn a() { b(); }
+        fn b() { a(); }
+        fn s() { println!("Shadowing S")}
+        s();
+    }
+    s();
+    fn s() {
+        println!("Outside S");
+    }
+    {
+        s();
+        fn a() { b(); }
+        fn b() { a(); }
+        fn s() { println!("Shadowing S again")}
+        s();
+    }
+    s();
+}
+
+Is valid and prints
+
+Outside S
+Outside S
+Shadowing S
+Shadowing S
+Outside S
+Shadowing S again
+Shadowing S again
+Outside S
+
+(May want to issue warning when using shadowing since it might give unintended behavior)

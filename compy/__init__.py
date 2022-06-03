@@ -17,7 +17,7 @@ def main(args: Sequence[str] | None = None):
     options = parser.parse_args(args)
     source: str = options.source
     if not source.endswith(SUFFIX):
-        raise ValueError(f'Source file "{source}" does not end in {SUFFIX}')
+        raise compy.common.UserError(f'Source file "{source}" does not end in {SUFFIX}')
     prefix = source[:-len(SUFFIX)]
     info = compy.common.CompilerInfo(source, prefix, prefix + '.out')
     compy.pipeline.run(info)
@@ -25,5 +25,7 @@ def main(args: Sequence[str] | None = None):
 def start():
     try:
         main()
-    except Exception as e:
+    except (compy.common.UserError, OSError) as e:
         print(f'Error: {e}')
+    # except (AssertionError, NotImplementedError) as e:
+    #     raise e

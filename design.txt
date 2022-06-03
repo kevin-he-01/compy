@@ -1,0 +1,38 @@
+Required explicit binding:
+
+Like:
+https://mail.python.org/pipermail/python-3000/2006-October/003968.html
+
+Immutable variable
+val(<name> = <expr>)
+Mutable variable
+var(<name> = <expr>)
+Debatable: Mutable variable that can be accessed in nested functions/closures, like x in :
+>>> def heap():
+...     x = 0
+...     def inc():
+...             nonlocal x
+...             x += 1
+...     def get():
+...             return x
+...     return (inc, get)
+
+var_closure(<name> = <expr>)
+
+Need syntactic sugar to implement with transform done before ANF phase, since x may turn into $heapvar.x, not immediate
+
+Static nested scoping like:
+
+https://peps.python.org/pep-0227/
+
+Use `with` liberally to start new scopes not supported in the Python language
+
+# Infinite loop (rust: loop {}):
+
+with loop:
+    ...
+
+# declare new scope:
+
+with _:
+    ...

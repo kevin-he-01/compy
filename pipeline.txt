@@ -1,8 +1,35 @@
 Code
 >-parse-> Python AST
 >-convert-> Bare AST
->-check-> Bare AST
->-anf-> ANF AST
+>-check-> (integer too large, etc. name errors are reported at tag step)
+>-tag-> Bare AST with infos/tags
+Information/tag added to:
+1st pass:
+- each scope (list of statements):
+    - list of named functions declared RIGHT under this scope (not in a scope inside the current scope)
+2nd pass:
+- local variable (Name references, not declarations): static type (if any)
+    - more advanced (with nested function/closure):
+        - is it a free variable? if so, where does it live on the closure?
+        - for mutable nonlocal variables, which function/which stack does it live on? Need to allocate object on heap if need to modify variable
+            - from outside like Python's nonlocal
+- functions (Name references, not declarations):
+    - good approach: simply make them var(func_name = closure) at the top of each scope and allocate stack space for its closure variable, so treatment reduces to the "local variable" case
+    - alt approach:
+        - arity
+        - mangled function name (due to nested scoping, different functions can have the same name, but the linker/nasm won't like it)
+        - type/signature if necessary
+- target of break statements?
+- for errors (unbound variable/function, static type error, etc.), gather a list here on each error seen
+NOTE: all information must be decidable without compiling the code
+>-anf-> ANF AST, add additional variables and make sure to assign them VarInfo's as well
+>-stack assignment-> 
+1st pass:
+- determine location of variables on local function stack
+2nd pass:
+- tag the closures appropriately with list of free variables, and determine the fetch location of closure variables
+    - tag Name with accessor information
+on the stack of the closure (not the outer function)
 >-code-> Assembly file
 >-nasm-> Object file
 >-link-> ELF binary
