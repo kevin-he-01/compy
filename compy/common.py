@@ -1,6 +1,7 @@
+from functools import reduce
 import sys
 from dataclasses import dataclass, field
-from typing import List
+from typing import Iterable, List, TypeVar
 
 import compy.syntax
 
@@ -18,6 +19,7 @@ class CompilerInfo:
     src_path: str
     src_prefix: str # Ex. the part of the path without the suffix, Ex. 'file' for file.c, used to generate default names like file.o files etc.
     out_path: str
+    debug: bool
     state: CompilerState = field(default_factory=lambda: CompilerState())
 
 # A function to be compiled by the compiler 
@@ -72,5 +74,18 @@ def report_error(info: CompilerInfo, code: str, ce: CompileError):
         print(' ' * span.col_offset + '^' * (end - span.col_offset), file=sys.stderr)
     else:
         print('<Multiline error>', file=sys.stderr)
+
+T = TypeVar('T')
+def concat(tss: Iterable[List[T]]) -> List[T]:
+    emp: List[T] = []
+    return reduce(lambda x, y: x + y, tss, emp)
+
+O = TypeVar('O')
+def unwrap(i: O | None, msg: str | None = None) -> O:
+    if msg == None:
+        assert i != None
+    else:
+        assert i != None, msg
+    return i
 
 MAIN = 'compy_main'

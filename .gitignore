@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+##### CUSTOM COMPY ADDITIONS #####
+
+# Compiled stuff
+*.o
+*.out

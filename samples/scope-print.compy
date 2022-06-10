@@ -1,0 +1,18 @@
+var(y = 0)
+print(y)
+with _:
+    var(x = 4)
+    print(x)
+    y = sub1(x)
+    x = -x
+    print(x)
+print(y)
+y = sub1(sub1(y))
+print(y)
+with _:
+    var(x = 11)
+    print(x)
+    x = add1(x)
+    print(x)
+    y = -x
+print(y)

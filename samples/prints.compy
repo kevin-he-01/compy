@@ -1,0 +1,18 @@
+val(x = 6)
+var(y = x)
+print(-123)
+print(123)
+print(x)
+print(add1(add1(5)))
+print(x)
+print(-x)
+print(sub1(x))
+print(-add1(x))
+print(add1(-x))
+
+print(133742)
+print(x)
+print(y)
+y = -42
+print(x)
+print(y)

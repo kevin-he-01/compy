@@ -1,11 +1,25 @@
 from pprint import pprint
+from typing import Callable
 import compy.parser
 import compy.tagger
 import compy.stack
+import compy.codegen
+import compy.asm
 from compy.common import CompileError, CompilerInfo, report_error
 
 
+DEBUG_HEADER_WIDTH = 50
+
 def run(info: CompilerInfo):
+    def debug(step_name: str, action: Callable[[], None]):
+        if info.debug:
+            print('=' * DEBUG_HEADER_WIDTH)
+            print(step_name.center(DEBUG_HEADER_WIDTH, '='))
+            print('=' * DEBUG_HEADER_WIDTH)
+            print()
+            action()
+            print()
+    
     with open(info.src_path) as src:
         code = src.read()
     try:
@@ -14,11 +28,9 @@ def run(info: CompilerInfo):
         report_error(info, code, ce)
         raise ce
     # TODO: run checker (Ex. number too large)
-    print('***DEBUG BARE AST***')
-    pprint(top)
+    debug('Bare AST', lambda: pprint(top))
     funcs = compy.tagger.tag(info.state, top)
-    print('***DEBUG TAGGED AST***')
-    pprint(top)
+    debug('Tagged AST', lambda: pprint(top))
 
     # Process diagnostics
     if (errors := info.state.errors):
@@ -30,7 +42,7 @@ def run(info: CompilerInfo):
     # All steps starting now SHOULD NOT fail!
     # TODO: run ANF
     compy.stack.allocate_stack(funcs)
-    print('***DEBUG POST STACK PROCESSING***')
-    pprint(funcs)
-    # TODO: compile
-    # TODO: assemble & link
+    debug('Post stack processing', lambda: pprint(funcs))
+    lines = compy.codegen.compile_prog(funcs)
+    compy.asm.build(info, lines)
+    print('Build successful!')

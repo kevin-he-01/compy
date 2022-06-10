@@ -1,0 +1,72 @@
+Declare a set of functions representing unary and binary operators:
+
+calling convention:
+
+typedef struct obj {
+    //
+} obj_t; 
+
+typedef const obj_t* arg_t;
+typedef int location; // For now use only line numbers, may use struct of int and string (file name) in the future
+
+// debug_info used to report file + line number in panic
+obj_t funcname(location debug_info, arg_t a, arg_t b, ...) {
+    //
+}
+
+void panic(location debug_info) {
+    // abort program with a message to stderr
+}
+
+return in RAX and RDX, pass parameters as const obj_t* (essentially immutable references) to enforce pass by value.
+
+
+Ex. obj_t add(location loc, arg_t a, arg_t b) {
+    //
+}
+
+Use macros to easily generated a large amount of functions like the add() case above
+
+like 
+
+#define FUNC(name, op)  int name(int a, int b) {\
+                            return a op b;\
+                        }
+FUNC(add, +)
+FUNC(mul, *)
+
+Add inline functions for type checking
+
+Operators:
+
+Binary:
+    integer:
+        arithmetic:
+            + - * / < > == != <= >=
+        bitwise:
+            | & << >>
+    boolean:
+        and or
+
+some operators (/ by 0, << by more than 32 bits etc.) might panic for additional reasons
+plus all arithmetic operators check overflow
+
+Unary:
+    integer: - (negation), ~ (bitwise complementation)
+    boolean: not
+
+
+Provide integer types with 2 flag bits:
+
+b1: signed/unsigned
+b0: wrapping/non-wrapping
+
+non-wrapping types panic (at least in debug mode) on overflows, such an overflow is considered an error
+just like Rust.
+wrappings types are expected to overflow
+
+Use https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html
+as helpers of implementing + - *.
+and 
+https://wiki.sei.cmu.edu/confluence/display/c/INT32-C.+Ensure+that+operations+on+signed+integers+do+not+result+in+overflow#:~:text=service%20attack.-,Compliant%20Solution,-This%20compliant%20solution
+to check for div by zero/overflow on division (only one case in signed numbers LONG_MIN / (-1) allows overflow)

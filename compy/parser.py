@@ -1,6 +1,6 @@
 import ast
 from typing import List
-from compy.syntax import ID, KW_UNARY_OPS, Assignment, Binding, Expression, Integer, NewScope, NoOp, Prim1, Scope, Statement
+from compy.syntax import ID, KW_UNARY_OPS, Assignment, Binding, Expression, Integer, NewScope, NoOp, Prim1, Scope, Statement, Unit
 import compy.syntax as syn
 from compy.common import CompileError, SourceSpan
 import compy.keywords as kw
@@ -23,6 +23,8 @@ def parse_expr(ex: ast.expr) -> Expression:
             return syn.Name(span=span, name=name)
         case ast.Constant(value=v):
             match v:
+                case None:
+                    return Unit(span=span)
                 case int(x):
                     return Integer(span=span, value=x)
                 # TODO: booleans, strings, etc.
@@ -30,6 +32,9 @@ def parse_expr(ex: ast.expr) -> Expression:
                     raise CompileError(msg=f"Unknown literal {v}", span=span)
         case ast.Call(func=ast.Name(id=(kw.PRINT | kw.ADD1 | kw.SUB1 as func)), args=[ex1]):
             return Prim1(span=span, op=KW_UNARY_OPS[func], ex1=parse_expr(ex1))
+        case ast.UnaryOp(op=ast.USub(), operand=ex1):
+            # TODO: treat ex1 of number case specially (as returning Integer(value=<negative>) to handle the most negative number (rather than computing it dynamically)
+            return Prim1(span=span, op=syn.UnaryOp.NEGATE, ex1=parse_expr(ex1))
         case _:
             raise CompileError(msg="Unknown expression", span=span)
 

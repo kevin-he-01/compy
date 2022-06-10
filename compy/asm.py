@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 from enum import Enum
+import os
+import subprocess
 from typing import List, TextIO
 
-from compy.common import MAIN, CompilerInfo
+from compy.common import CompilerInfo
 
 
 EOL = '\n'
@@ -17,10 +19,24 @@ class Operand:
 class Reg(Operand, Enum):
     RAX = 'rax'
     RCX = 'rcx'
+    RDX = 'rdx'
+    RDI = 'rdi'
+    RSI = 'rsi'
+    R8 = 'r8'
+    R9 = 'r9'
     RBP = 'rbp'
     RSP = 'rsp'
 
     def assemble(self) -> str:
+        return self.value
+
+class WordSize(Enum):
+    BYTE = 'byte'
+    WORD = 'word'
+    DWORD = 'dword'
+    QWORD = 'qword'
+
+    def notation(self) -> str:
         return self.value
 
 @dataclass
@@ -28,6 +44,35 @@ class Const(Operand):
     value: int
     def assemble(self) -> str:
         return str(self.value)
+
+@dataclass(kw_only=True)
+class MemOperand(Operand):
+    size: WordSize = WordSize.QWORD
+    def address(self) -> str:
+        raise NotImplementedError
+    def assemble(self) -> str:
+        return self.size.notation() + ' [' + self.address() + ']'
+
+@dataclass
+class Symbol(Operand):
+    name: str
+    def assemble(self) -> str:
+        return self.name
+
+def offset_suffix(offset: int):
+    if offset == 0:
+        return ''
+    elif offset > 0:
+        return f' + {offset}'
+    else: # offset < 0
+        return f' - {-offset}'
+
+@dataclass
+class MemRegOffset(MemOperand):
+    reg: Reg
+    offset: int
+    def address(self) -> str:
+        return self.reg.assemble() + offset_suffix(self.offset)
 
 class AsmLine:
     def assemble(self) -> str:
@@ -50,20 +95,72 @@ class Instruction(AsmLine):
     def assemble(self) -> str:
         return f'\t{self.mnemonic} {", ".join(operand.assemble() for operand in self.operands)}'
 
+@dataclass
+class Directive(AsmLine):
+    mnemonic: str
+    arg: str
+    def assemble(self) -> str:
+        return f'{self.mnemonic} {self.arg}'
+
+# Directives
+
+def global_(sym: str):
+    return Directive('global', sym)
+
+def extern(sym: str):
+    return Directive('extern', sym)
+
+# Instructions
+
 def mov(dst: Operand, src: Operand):
     return Instruction('mov', [dst, src])
 
-PREAMBLE = f"""
-section .text
-global {MAIN}
-"""
+def add(op1: Operand, op2: Operand):
+    return Instruction('add', [op1, op2])
 
-MAIN_LABEL = Label(MAIN)
+def sub(op1: Operand, op2: Operand):
+    return Instruction('sub', [op1, op2])
+
+def neg(op: Operand):
+    return Instruction('neg', [op])
+
+def call(op: Operand):
+    return Instruction('call', [op])
+
+def push(arg: Operand):
+    return Instruction('push', [arg])
+
+def pop(arg: Operand):
+    return Instruction('pop', [arg])
+
+def ret():
+    return Instruction('ret', [])
+
+# Instructions end
+
+PREAMBLE = "section .text\n"
 
 def output(dst: TextIO, lines: List[AsmLine]):
-    dst.writelines(line.assemble() for line in lines)
+    dst.writelines(line.asm_line() for line in lines)
 
-def assemble(info: CompilerInfo, lines: List[AsmLine]):
-    with open(info.src_prefix + '.nasm', 'w') as nasm:
+CFLAGS = [
+    '-Wall',
+    '-Wextra',
+    '-Wformat=2',
+    '-Wconversion',
+    '-Wduplicated-cond',
+    '-Wlogical-op',
+    '-Wshift-overflow=2',
+    '-Wfloat-equal',
+    '-Wshadow'
+]
+
+def build(info: CompilerInfo, lines: List[AsmLine]):
+    NASM_FILE = info.src_prefix + '.nasm'
+    OBJ_FILE = info.src_prefix + '.o'
+    with open(NASM_FILE, 'w') as nasm:
+        nasm.write(PREAMBLE)
         output(nasm, lines)
     # TODO: run nasm on the output
+    subprocess.check_call(['nasm', '-f', 'elf64', '-o', OBJ_FILE, NASM_FILE])
+    subprocess.check_call(['gcc', *CFLAGS, '-o', info.out_path, OBJ_FILE, os.path.dirname(__file__) + '/../runtime/main.c'])

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import List
+from compy.asm import MemRegOffset, Reg
 from compy.common import CompiledFunction
 
 from compy.syntax import Binding, Node, NodeWalker, Scope
@@ -58,3 +59,7 @@ def allocate_stack(funcs: List[CompiledFunction]):
         alloc = StackAllocator()
         AllocationWalker().walk(func.body, alloc.root)
         func.stack_usage = alloc.space
+
+# Return a memory operand that can be used to access the stack variable at `stack_pos` at offset `offset`
+def op_stack(stack_pos: int, offset: int = 0):
+    return MemRegOffset(Reg.RBP, stack_pos + offset)

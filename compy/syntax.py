@@ -28,6 +28,9 @@ class VarInfo:
     # *** DEBUG INFORMATION ***
     var_id: int = field(default_factory=gen_var_id)
 
+    def get_stack_offset(self, fail_msg: str = 'Stack offset not computed yet!'):
+        return compy.common.unwrap(self.stack_offset, fail_msg)
+
 @dataclass
 class FuncInfo:
     symbol_name: str # Could be mangled
@@ -114,6 +117,11 @@ class Name(Leaf,Expression):
 @dataclass
 class Integer(Leaf,Expression):
     value: int
+
+@dataclass
+class Unit(Leaf,Expression):
+    # The only instance of 'None'
+    pass
 
 class UnaryOp(Enum):
     NEGATE = auto()
