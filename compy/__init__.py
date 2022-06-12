@@ -1,4 +1,5 @@
 import argparse
+import os
 import sys
 from typing import Sequence
 
@@ -14,15 +15,21 @@ def main(args: Sequence[str] | None = None):
                                     description='A compiler')
     parser.add_argument('source', help='The source code to compile')
     parser.add_argument('-d', '--debug', action='store_true')
+    parser.add_argument('-r', '--run', action='store_true', help='If present, also runs the compiled executable (with no arguments) after compilation. ' +
+                                                                 'Do not use this option if calling main() from another program since it uses exec()')
     # parser.add_argument('-o', '--output', help='The path to the output executable')
     options = parser.parse_args(args)
     source: str = options.source
     debug: bool = options.debug
+    run: bool = options.run
     if not source.endswith(SUFFIX):
         raise compy.common.UserError(f'Source file "{source}" does not end in {SUFFIX}')
     prefix = source[:-len(SUFFIX)]
     info = compy.common.CompilerInfo(source, prefix, prefix + '.out', debug)
     compy.pipeline.run(info)
+    if run:
+        print('=====Running executable=====')
+        os.execl(info.out_path, info.out_path)
 
 def start():
     try:

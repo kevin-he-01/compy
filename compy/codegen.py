@@ -77,6 +77,7 @@ def compile_func(func: CompiledFunction) -> CODE:
         sub(Reg.RSP, Const(stack_space)),
         # TODO: pass return label as second arg, with None if compiling outside declaration where return is not allowed (should handle this in checker)
         *compile_scope(func.body),
+        *load_none(), # 'return None' when slipping off the end of function
         # TODO: allocate and insert a "function end" label here (generate label from a mutable state object) to allow returns
         add(Reg.RSP, Const(stack_space)),
         pop(Reg.RBP),

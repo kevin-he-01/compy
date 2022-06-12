@@ -32,8 +32,9 @@ def parse_expr(ex: ast.expr) -> Expression:
                     raise CompileError(msg=f"Unknown literal {v}", span=span)
         case ast.Call(func=ast.Name(id=(kw.PRINT | kw.ADD1 | kw.SUB1 as func)), args=[ex1]):
             return Prim1(span=span, op=KW_UNARY_OPS[func], ex1=parse_expr(ex1))
+        case ast.UnaryOp(op=ast.USub(), operand=ast.Constant(value=int(x))):
+            return Integer(span=span, value=-x)
         case ast.UnaryOp(op=ast.USub(), operand=ex1):
-            # TODO: treat ex1 of number case specially (as returning Integer(value=<negative>) to handle the most negative number (rather than computing it dynamically)
             return Prim1(span=span, op=syn.UnaryOp.NEGATE, ex1=parse_expr(ex1))
         case _:
             raise CompileError(msg="Unknown expression", span=span)

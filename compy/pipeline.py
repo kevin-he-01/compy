@@ -1,10 +1,11 @@
 from pprint import pprint
 from typing import Callable
-import compy.parser
-import compy.tagger
-import compy.stack
-import compy.codegen
 import compy.asm
+import compy.checker
+import compy.codegen
+import compy.parser
+import compy.stack
+import compy.tagger
 from compy.common import CompileError, CompilerInfo, report_error
 
 
@@ -27,7 +28,7 @@ def run(info: CompilerInfo):
     except CompileError as ce:
         report_error(info, code, ce)
         raise ce
-    # TODO: run checker (Ex. number too large)
+    compy.checker.check(info.state, top)
     debug('Bare AST', lambda: pprint(top))
     funcs = compy.tagger.tag(info.state, top)
     debug('Tagged AST', lambda: pprint(top))
