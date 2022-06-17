@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 import os
 import subprocess
+import tempfile
 from typing import List, TextIO
 
 from compy.common import CompilerInfo
@@ -155,12 +156,21 @@ CFLAGS = [
     '-Wshadow'
 ]
 
+def run_cmd(args: List[str]):
+    print('+ ' + ' '.join(args))
+    subprocess.check_call(args)
+
 def build(info: CompilerInfo, lines: List[AsmLine]):
-    NASM_FILE = info.src_prefix + '.nasm'
-    OBJ_FILE = info.src_prefix + '.o'
-    with open(NASM_FILE, 'w') as nasm:
-        nasm.write(PREAMBLE)
-        output(nasm, lines)
-    # TODO: run nasm on the output
-    subprocess.check_call(['nasm', '-f', 'elf64', '-o', OBJ_FILE, NASM_FILE])
-    subprocess.check_call(['gcc', *CFLAGS, '-o', info.out_path, OBJ_FILE, os.path.dirname(__file__) + '/../runtime/main.c'])
+    with tempfile.TemporaryDirectory() as tmpdir:
+        def prefix(debug: bool) -> str:
+            return info.src_prefix if debug else (tmpdir + '/compy')
+        nasm_file = prefix(info.debug_flags.asm) + '.nasm'
+        obj_file = prefix(info.debug_flags.obj) + '.o'
+        with open(nasm_file, 'w') as nasm:
+            nasm.write(PREAMBLE)
+            output(nasm, lines)
+        # TODO: run nasm on the output
+        print('#### Running build commands...')
+        run_cmd(['nasm', '-f', 'elf64', '-o', obj_file, nasm_file])
+        run_cmd(['gcc', *CFLAGS, '-o', info.out_path, obj_file, os.path.dirname(__file__) + '/../runtime/main.c'])
+        print('#### Build commands ran successfully...')

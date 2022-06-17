@@ -15,11 +15,17 @@ class CompilerState:
         self.errors.append(error)
 
 @dataclass
+class DebugFlags:
+    pipeline: bool
+    asm: bool # *.nasm
+    obj: bool # *.o
+
+@dataclass
 class CompilerInfo:
     src_path: str
     src_prefix: str # Ex. the part of the path without the suffix, Ex. 'file' for file.c, used to generate default names like file.o files etc.
     out_path: str
-    debug: bool
+    debug_flags: DebugFlags
     state: CompilerState = field(default_factory=lambda: CompilerState())
 
 # A function to be compiled by the compiler 

@@ -13,7 +13,7 @@ DEBUG_HEADER_WIDTH = 50
 
 def run(info: CompilerInfo):
     def debug(step_name: str, action: Callable[[], None]):
-        if info.debug:
+        if info.debug_flags.pipeline:
             print('=' * DEBUG_HEADER_WIDTH)
             print(step_name.center(DEBUG_HEADER_WIDTH, '='))
             print('=' * DEBUG_HEADER_WIDTH)
