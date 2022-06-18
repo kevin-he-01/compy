@@ -24,6 +24,9 @@ class TestAdder(common.CompyTestCase):
     def test_vars2(self):
         self.success_case('vars2', VARS2_OUTPUT)
 
+    def test_vars3(self):
+        self.success_case('vars3', VARS3_OUTPUT)
+
     def test_expr(self):
         self.success_case('expr', b'5\n')
 
@@ -67,4 +70,25 @@ VARS2_OUTPUT = b'''1
 -1000
 318
 323
+'''
+
+VARS3_OUTPUT = b'''124
+124
+457
+790
+-124
+-457
+-790
+-788
+-127
+124
+122
+123
+456
+789
+-123
+-456
+-789
+-787
+-125
 '''

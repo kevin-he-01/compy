@@ -33,7 +33,6 @@ def compile_expr(ex: Expression) -> CODE:
             # TODO: when implementing closures, use effective offset from this call frame's stack
             return read_var_at(unwrap(info).get_stack_offset())
         case Integer(value=value):
-            # TODO: guard against integer overflow in checker.py
             return [ mov(RVAL, Const(value)) ]
         case Prim1(op=UnaryOp.NEGATE, ex1=inside):
             return compile_expr(inside) + [ neg(RVAL) ]
