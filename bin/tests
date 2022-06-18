@@ -1,0 +1,16 @@
+#! /bin/bash
+
+cd "$(dirname -- "${BASH_SOURCE[0]}")/.." || exit
+
+if (( $# > 1 )); then
+    echo "usage: tests [tests.path.to.test_something[.TestClass]]" >&2
+    exit 2
+fi
+
+if (( $# == 1 )); then
+    set -x
+    python3 -m unittest "$1" -v
+else
+    set -x
+    python3 -m unittest discover -s tests -v
+fi

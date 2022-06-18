@@ -156,11 +156,11 @@ CFLAGS = [
     '-Wshadow'
 ]
 
-def run_cmd(args: List[str]):
-    print('+ ' + ' '.join(args))
-    subprocess.check_call(args)
-
 def build(info: CompilerInfo, lines: List[AsmLine]):
+    oprint = info.print
+    def run_cmd(args: List[str]):
+        oprint('+ ' + ' '.join(args))
+        subprocess.check_call(args)
     with tempfile.TemporaryDirectory() as tmpdir:
         def prefix(debug: bool) -> str:
             return info.src_prefix if debug else (tmpdir + '/compy')
@@ -169,8 +169,7 @@ def build(info: CompilerInfo, lines: List[AsmLine]):
         with open(nasm_file, 'w') as nasm:
             nasm.write(PREAMBLE)
             output(nasm, lines)
-        # TODO: run nasm on the output
-        print('#### Running build commands...')
+        oprint('#### Running build commands...')
         run_cmd(['nasm', '-f', 'elf64', '-o', obj_file, nasm_file])
         run_cmd(['gcc', *CFLAGS, '-o', info.out_path, obj_file, os.path.dirname(__file__) + '/../runtime/main.c'])
-        print('#### Build commands ran successfully...')
+        oprint('#### Build commands ran successfully...')

@@ -1,14 +1,14 @@
 import argparse
 import os
 import sys
-from typing import Sequence
+from typing import Sequence, TextIO
 
 import compy.common
 import compy.pipeline
 
 SUFFIX = '.compy'
 
-def main(args: Sequence[str] | None = None):
+def main(args: Sequence[str] | None = None, stdout: TextIO = sys.stdout, stderr: TextIO = sys.stderr):
     # print('Argv: ', sys.argv)
     # print('Main: ', args)
     parser = argparse.ArgumentParser(prog=__name__,
@@ -35,7 +35,7 @@ def main(args: Sequence[str] | None = None):
     if out_path == None:
         out_path = prefix + '.out'
     flags = compy.common.DebugFlags(d_pipeline, d_asm, d_obj)
-    info = compy.common.CompilerInfo(source, prefix, out_path, flags)
+    info = compy.common.CompilerInfo(source, prefix, out_path, flags, stdout, stderr)
     compy.pipeline.run(info)
     if run:
         print('=====Running executable=====')
@@ -45,7 +45,7 @@ def start():
     try:
         main()
     except (compy.common.UserError, OSError) as e:
-        print(f'Error: {e}')
+        print(f'Error: {e}', file=sys.stderr)
         sys.exit(1)
     # except (AssertionError, NotImplementedError) as e:
     #     raise e

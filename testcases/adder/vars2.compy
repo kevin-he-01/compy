@@ -1,0 +1,30 @@
+var(a = 1)
+var(b = 2)
+print(a)
+print(b)
+a = 1024
+b = -42
+print(a)
+print(b)
+a = 4
+print(a)
+print(b)
+b = 9
+print(a)
+print(b)
+with _:
+    val(c = 100)
+    a = -c
+print(a)
+print(b)
+with _:
+    val(c = 1000)
+    b = -c
+print(a)
+print(b)
+with _:
+    val(g = 321)
+    a = sub1(sub1(sub1(g)))
+    b = add1(add1(g))
+print(a)
+print(b)

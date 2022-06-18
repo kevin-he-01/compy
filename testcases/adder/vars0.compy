@@ -1,0 +1,2 @@
+val(hello = -1024)
+print(hello)

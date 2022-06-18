@@ -12,14 +12,15 @@ from compy.common import CompileError, CompilerInfo, report_error
 DEBUG_HEADER_WIDTH = 50
 
 def run(info: CompilerInfo):
+    oprint = info.print
     def debug(step_name: str, action: Callable[[], None]):
         if info.debug_flags.pipeline:
-            print('=' * DEBUG_HEADER_WIDTH)
-            print(step_name.center(DEBUG_HEADER_WIDTH, '='))
-            print('=' * DEBUG_HEADER_WIDTH)
-            print()
+            oprint('=' * DEBUG_HEADER_WIDTH)
+            oprint(step_name.center(DEBUG_HEADER_WIDTH, '='))
+            oprint('=' * DEBUG_HEADER_WIDTH)
+            oprint()
             action()
-            print()
+            oprint()
     
     with open(info.src_path) as src:
         code = src.read()
@@ -46,4 +47,4 @@ def run(info: CompilerInfo):
     debug('Post stack processing', lambda: pprint(funcs))
     lines = compy.codegen.compile_prog(funcs)
     compy.asm.build(info, lines)
-    print('Build successful!')
+    oprint('Build successful!')

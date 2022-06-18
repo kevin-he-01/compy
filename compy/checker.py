@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from compy.common import CompileError, CompilerState
+from compy.common import CompilerState, IntegerOOB
 
 from compy.syntax import Integer, Node, NodeWalker
 
@@ -25,7 +25,7 @@ class Checker(NodeWalker[None]):
             case Integer(value=v):
                 # For now, assume everything is signed
                 if not (MIN_INT <= v <= MAX_INT):
-                    self.state.err(CompileError(f'Integer constant {v} is out of bounds for type `int`', span=node.span))
+                    self.state.err(IntegerOOB(val=v, span=node.span))
                 # Integr is a leaf so no recursive walks
             case _:
                 return super().walk(node, ctx)
