@@ -2,9 +2,11 @@ from typing import List
 from tests import common
 
 
+ADDER = 'adder'
+
 class TestAdder(common.CompyTestCase):
     def prefix(self) -> List[str]:
-        return ['adder']
+        return [ADDER]
     
     def test_print0(self):
         self.success_case('print0', b'42\n')
@@ -29,6 +31,19 @@ class TestAdder(common.CompyTestCase):
 
     def test_expr(self):
         self.success_case('expr', b'5\n')
+
+class TestTypedAdder(common.CompyTestCase):
+    def prefix(self) -> List[str]:
+        return [ADDER, 'typed']
+    
+    def test_print_none(self):
+        self.success_case('print-none', b'None\n')
+
+    def test_print_ret(self):
+        self.success_case('print-ret', b'-42\nNone\n')
+
+    def test_vars0(self):
+        self.success_case('vars0', b'None\n1024\nNone\n')
 
 STRESS_OUTPUT = b'''-123
 123

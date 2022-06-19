@@ -1,3 +1,4 @@
+from enum import Enum
 from functools import reduce
 from dataclasses import dataclass, field
 from typing import Iterable, List, TextIO, TypeAlias, TypeVar
@@ -45,6 +46,14 @@ class CompiledFunction:
     id: int
     stack_usage: int | None = None
     # id should originate from the function declaration node in the AST
+
+class PrimType(Enum):
+    INT = 0
+    NONE = 1
+    TYPE = 2
+
+    def code(self) -> int:
+        return self.value
 
 @dataclass
 class SourceSpan:

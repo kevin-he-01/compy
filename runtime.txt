@@ -7,7 +7,7 @@ typedef struct obj {
 } obj_t; 
 
 typedef const obj_t* arg_t;
-typedef int location; // For now use only line numbers, may use struct of int and string (file name) in the future
+typedef long location; // For now use only line numbers, may use struct of long and string (file name) in the future
 
 // debug_info used to report file + line number in panic
 obj_t funcname(location debug_info, arg_t a, arg_t b, ...) {
@@ -70,3 +70,12 @@ as helpers of implementing + - *.
 and 
 https://wiki.sei.cmu.edu/confluence/display/c/INT32-C.+Ensure+that+operations+on+signed+integers+do+not+result+in+overflow#:~:text=service%20attack.-,Compliant%20Solution,-This%20compliant%20solution
 to check for div by zero/overflow on division (only one case in signed numbers LONG_MIN / (-1) allows overflow)
+
+## Planned types
+
+2^32 * n: Integer types
+    int
+    uint
+    wrapping versions of those
+1: NoneType
+2: type (holding a value itself representing a primitive type)

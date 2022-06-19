@@ -34,8 +34,7 @@ class StackAllocator:
     def require_minimum_space(self, minimum: int):
         self.space = max(self.space, minimum)
 
-# TODO: change to 16 to add type information
-SIZE_UNTYPED = 8
+SIZE_UNTYPED = 16
 
 class AllocationWalker(NodeWalker[StackPosition]):
     def walk(self, node: Node, ctx: StackPosition):

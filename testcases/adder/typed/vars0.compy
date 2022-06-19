@@ -1,0 +1,6 @@
+var(x = None)
+print(x)
+x = 1024
+print(x)
+x = None
+print(x)
