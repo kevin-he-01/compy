@@ -2,7 +2,8 @@
     "python.analysis.typeCheckingMode": "strict",
     "python.analysis.diagnosticMode": "workspace",
     "files.associations": {
-        "*.compy": "python"
+        "*.compy": "python",
+        "*.h": "c"
     },
     "terminal.integrated.env.linux": {
         "PATH": "${workspaceFolder}/bin:${env:PATH}"
