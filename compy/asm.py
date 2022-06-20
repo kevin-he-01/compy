@@ -144,7 +144,7 @@ PREAMBLE = "section .text\n"
 def output(dst: TextIO, lines: List[AsmLine]):
     dst.writelines(line.asm_line() for line in lines)
 
-RUNTIME_OBJ = 'main.o'
+RUNTIME_OBJ = 'runtime.o'
 
 def build(info: CompilerInfo, lines: List[AsmLine]):
     oprint = info.print
