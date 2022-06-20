@@ -1,5 +1,6 @@
 from pprint import pprint
 from typing import Callable
+
 import compy.asm
 import compy.checker
 import compy.codegen
@@ -7,7 +8,6 @@ import compy.parser
 import compy.stack
 import compy.tagger
 from compy.common import CompileError, CompilerInfo, report_error
-
 
 DEBUG_HEADER_WIDTH = 50
 

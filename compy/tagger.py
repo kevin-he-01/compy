@@ -1,8 +1,11 @@
 from dataclasses import dataclass, field
 from typing import Dict, List
-from compy.common import ID, MAIN, CompiledFunction, CompilerState, ImmutableVarError, MutableClosureVarError, SourceSpan, UnboundVarError
-from compy.syntax import Assignment, Binding, Name, Node, NodeWalker, Scope, ScopeInformation, VarInfo
 
+from compy.common import (ID, MAIN, CompiledFunction, CompilerState,
+                          ImmutableVarError, MutableClosureVarError,
+                          SourceSpan, UnboundVarError)
+from compy.syntax import (Assignment, Binding, Name, Node, NodeWalker, Scope,
+                          ScopeInformation, VarInfo)
 
 MAIN_ID = 1
 

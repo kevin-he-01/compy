@@ -1,9 +1,13 @@
 from typing import List
-from compy.asm import AsmLine, Const, Label, Reg, Symbol, add, call, extern, global_, mov, push, ret, sub, pop
-from compy.common import MAIN, CompiledFunction, PrimType, SourceSpan, concat, unwrap
-from compy.stack import op_stack
-from compy.syntax import Assignment, Binding, Expression, GetType, Integer, Name, NewScope, NoOp, Prim1, Scope, Statement, TypeLiteral, UnaryOp, Unit, VarInfo
 
+from compy.asm import (AsmLine, Const, Label, Reg, Symbol, add, call, extern,
+                       global_, mov, pop, push, ret, sub)
+from compy.common import (MAIN, CompiledFunction, PrimType, SourceSpan, concat,
+                          unwrap)
+from compy.stack import op_stack
+from compy.syntax import (Assignment, Binding, Expression, GetType, Integer,
+                          Name, NewScope, NoOp, Prim1, Scope, Statement,
+                          TypeLiteral, UnaryOp, Unit, VarInfo)
 
 CODE = List[AsmLine]
 

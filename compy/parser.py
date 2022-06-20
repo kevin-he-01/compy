@@ -1,9 +1,12 @@
 import ast
 from typing import List
-from compy.syntax import Assignment, Binding, Expression, GetType, Integer, NewScope, NoOp, Prim1, Scope, Statement, Unit
+
+import compy.keywords as kw
 import compy.syntax as syn
 from compy.common import ID, CompileError, SourceSpan
-import compy.keywords as kw
+from compy.syntax import (Assignment, Binding, Expression, GetType, Integer,
+                          NewScope, NoOp, Prim1, Scope, Statement, Unit)
+
 
 def validate_name(span: SourceSpan, name: ID):
     if kw.is_keyword(name):
