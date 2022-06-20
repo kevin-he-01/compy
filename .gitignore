@@ -133,3 +133,6 @@ dmypy.json
 # Compiled stuff
 *.o
 *.out
+
+# Panic logs
+.compy_panic

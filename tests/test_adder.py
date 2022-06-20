@@ -44,6 +44,18 @@ class TestTypedAdder(common.CompyTestCase):
 
     def test_vars0(self):
         self.success_case('vars0', b'None\n1024\nNone\n')
+    
+    def test_sub1_negative(self):
+        self.runtime_failure('sub1-e-ty', common.PanicReason.TYPE_ERROR)
+        self.runtime_failure('sub1-e', common.PanicReason.ARITH_OVERFLOW)
+    
+    def test_add1_negative(self):
+        self.runtime_failure('add1-e-ty', common.PanicReason.TYPE_ERROR)
+        self.runtime_failure('add1-e', common.PanicReason.ARITH_OVERFLOW)
+
+    def test_neg_negative(self):
+        self.runtime_failure('neg-e0', common.PanicReason.TYPE_ERROR)
+        self.runtime_failure('neg-e1', common.PanicReason.ARITH_OVERFLOW)
 
 STRESS_OUTPUT = b'''-123
 123

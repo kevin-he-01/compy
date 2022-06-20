@@ -46,6 +46,9 @@ typedef enum {
 #define NONE_VAL ((obj_t) {.val = {.un_int = 0UL}, .type = TYPE_NONE})
 #define INT_VAL(v) ((obj_t) {.val = {.si_int = (v)}, .type = TYPE_INT})
 
+// Global variables
+const char* panic_dumpfile; // Used to facilitate testing
+
 // Runtime exports
 
 const char *str_reason(reason_t reason) {
@@ -60,13 +63,28 @@ const char *str_reason(reason_t reason) {
     return "";
 }
 
+void dump_panic_reason(const char* reason) {
+    if (panic_dumpfile) {
+        fprintf(stderr, "Dumping panic reason to file '%s'...\n", panic_dumpfile);
+        FILE *df = fopen(panic_dumpfile, "w");
+        if (!df) {
+            perror("Failed to open dump file");
+            return;
+        }
+        fprintf(df, "%s\n", reason);
+        fclose(df);
+    }
+}
+
 void panic(location_t location, reason_t reason, const char *fmt, ...) {
-    fprintf(stderr, "[!] Panic (%s) at line %ld: ", str_reason(reason), location);
+    const char* reason_str = str_reason(reason);
+    fprintf(stderr, "[!] Panic (%s) at line %ld: ", reason_str, location);
     va_list args;
     va_start(args, fmt);
     vfprintf(stderr, fmt, args);
     va_end(args);
     putchar('\n');
+    dump_panic_reason(reason_str);
     exit(1);
 }
 
@@ -156,7 +174,7 @@ REGPASS_PRIM1(sub1)
 
 // Main
 int main(void) {
-    // TODO: in the future, allow accessing argc and argv via some runtime function
+    panic_dumpfile = getenv("COMPY_PANIC_DUMPFILE");
     compy_main();
     return 0;
 }

@@ -1,17 +1,31 @@
 from dataclasses import dataclass
+from enum import Enum, auto
 import io
+import os
 import subprocess
-from typing import List, Type
+from typing import Any, List, Type
 import unittest, compy
 from compy.common import CompileError
 
-EXIT_SUCCESS = 0
-
-TESTCASE_DIR = './testcases/'
-
-TEMP_OUTPUT = './testexe.out'
-
 PATH_SPEC = str | List[str]
+
+EXIT_SUCCESS = 0
+TESTCASE_DIR = './testcases/'
+TEMP_OUTPUT = './testexe.out'
+DUMPFILE = '.compy_panic'
+DUMP_ENV = 'COMPY_PANIC_DUMPFILE'
+
+class AutoName(Enum):
+    @staticmethod
+    def _generate_next_value_(name: str, start: int, count: int, last_values: list[Any]) -> Any:
+        return name
+
+class PanicReason(AutoName):
+    TYPE_ERROR = auto()
+    ARITH_OVERFLOW = auto()
+
+    def get_str(self) -> str:
+        return self.value
 
 class CompyTestCase(unittest.TestCase):
     # Can override to change the prefix path to test cases
@@ -50,6 +64,23 @@ class CompyTestCase(unittest.TestCase):
             case CompilerFailure(exc=exc):
                 with self.assertRaises(exc):
                     run_compiler()
+            case RuntimeFailure(reason=reason):
+                run_compiler()
+                try:
+                    os.remove(DUMPFILE)
+                except FileNotFoundError:
+                    pass
+                os.environ[DUMP_ENV] = DUMPFILE
+                try:
+                    subprocess.run([TEMP_OUTPUT], input=prog.stdin, capture_output=True)
+                finally:
+                    del os.environ[DUMP_ENV]
+                try:
+                    with open(DUMPFILE) as df:
+                        self.assertEqual(reason.get_str(), df.read().strip(), 'Wrong panic reason')
+                except FileNotFoundError:
+                    # Can happen due to SIGSEGV/abnormal termination as well
+                    self.fail('Expected program to panic but no panics observed')
 
     def get_full_path(self, short: PATH_SPEC) -> List[str]:
         match short:
@@ -68,6 +99,10 @@ class CompyTestCase(unittest.TestCase):
         self.program_test(ProgramTestCase(self.get_full_path(prog_path),
             CompilerFailure(exc=exc), stdin=b''))
 
+    def runtime_failure(self, prog_path: PATH_SPEC, reason: PanicReason, *, stdin: bytes = b''):
+        self.program_test(ProgramTestCase(self.get_full_path(prog_path),
+            RuntimeFailure(reason=reason), stdin=stdin))
+
 @dataclass
 class Success:
     output: bytes
@@ -78,12 +113,11 @@ class Success:
 class CompilerFailure:
     exc: Type[BaseException]
 
-# TBD: implement this when implementing panic (probably output exact reason for panic in a separate file when in debug mode)
-# @dataclass
-# class RuntimeFailure:
-#     pass
+@dataclass
+class RuntimeFailure:
+    reason: PanicReason
 
-OUTCOME = Success | CompilerFailure
+OUTCOME = Success | CompilerFailure | RuntimeFailure
 
 @dataclass
 class ProgramTestCase:
