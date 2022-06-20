@@ -144,17 +144,7 @@ PREAMBLE = "section .text\n"
 def output(dst: TextIO, lines: List[AsmLine]):
     dst.writelines(line.asm_line() for line in lines)
 
-CFLAGS = [
-    '-Wall',
-    '-Wextra',
-    '-Wformat=2',
-    '-Wconversion',
-    '-Wduplicated-cond',
-    '-Wlogical-op',
-    '-Wshift-overflow=2',
-    '-Wfloat-equal',
-    '-Wshadow'
-]
+RUNTIME_OBJ = 'main.o'
 
 def build(info: CompilerInfo, lines: List[AsmLine]):
     oprint = info.print
@@ -171,5 +161,5 @@ def build(info: CompilerInfo, lines: List[AsmLine]):
             output(nasm, lines)
         oprint('#### Running build commands...')
         run_cmd(['nasm', '-f', 'elf64', '-o', obj_file, nasm_file])
-        run_cmd(['gcc', *CFLAGS, '-o', info.out_path, obj_file, os.path.dirname(__file__) + '/../runtime/main.c'])
+        run_cmd(['gcc', '-o', info.out_path, obj_file, os.path.dirname(__file__) + '/../runtime/' + RUNTIME_OBJ])
         oprint('#### Build commands ran successfully...')

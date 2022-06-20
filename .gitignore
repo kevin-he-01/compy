@@ -136,3 +136,6 @@ dmypy.json
 
 # Panic logs
 .compy_panic
+
+# Dependency files
+*.d
