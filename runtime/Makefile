@@ -24,3 +24,6 @@ $(TARGET): $(OBJECTS)
 
 %.o: %.c Makefile
 	$(CC) $(WARNING) $(CFLAGS) -MMD -MP -c $< -o $@
+
+# Adapted from https://stackoverflow.com/a/52036564
+# CC BY-SA 4.0
