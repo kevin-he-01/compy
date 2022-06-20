@@ -1,14 +1,14 @@
 from enum import Enum
 from functools import reduce
 from dataclasses import dataclass, field
-from typing import Iterable, List, TextIO, TypeAlias, TypeVar
+from typing import Iterable, List, TextIO, TypeVar
 
 import compy.syntax
 
 class UserError(Exception):
     pass
 
-ID: TypeAlias = 'compy.syntax.ID'
+ID = str
 
 @dataclass
 class CompilerState:

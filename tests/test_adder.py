@@ -57,6 +57,12 @@ class TestTypedAdder(common.CompyTestCase):
         self.runtime_failure('neg-e0', common.PanicReason.TYPE_ERROR)
         self.runtime_failure('neg-e1', common.PanicReason.ARITH_OVERFLOW)
 
+    def test_types(self):
+        self.success_case('types', TYPES_OUTPUT)
+
+    def test_types_mut(self):
+        self.success_case('types-mut', b'NoneType\nint\ntype\n')
+
 STRESS_OUTPUT = b'''-123
 123
 6
@@ -118,4 +124,18 @@ VARS3_OUTPUT = b'''124
 -789
 -787
 -125
+'''
+
+TYPES_OUTPUT = b'''NoneType
+int
+type
+NoneType
+123321
+NoneType
+int
+int
+type
+type
+type
+type
 '''

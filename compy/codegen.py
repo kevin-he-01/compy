@@ -2,7 +2,7 @@ from typing import List
 from compy.asm import AsmLine, Const, Label, Reg, Symbol, add, call, extern, global_, mov, push, ret, sub, pop
 from compy.common import MAIN, CompiledFunction, PrimType, SourceSpan, concat, unwrap
 from compy.stack import op_stack
-from compy.syntax import Assignment, Binding, Expression, Integer, Name, NewScope, NoOp, Prim1, Scope, Statement, UnaryOp, Unit, VarInfo
+from compy.syntax import Assignment, Binding, Expression, GetType, Integer, Name, NewScope, NoOp, Prim1, Scope, Statement, TypeLiteral, UnaryOp, Unit, VarInfo
 
 
 CODE = List[AsmLine]
@@ -56,6 +56,10 @@ def compile_expr(ex: Expression) -> CODE:
             return read_var_at(unwrap(info).get_stack_offset())
         case Integer(value=value):
             return [ mov(RVAL, Const(value)), mov(RTYPE, op_type(PrimType.INT)) ]
+        case TypeLiteral(ty=ty):
+            return [ mov(RVAL, op_type(ty)), mov(RTYPE, op_type(PrimType.TYPE)) ]
+        case GetType(ex=ex):
+            return compile_expr(ex) + [ mov(RVAL, RTYPE), mov(RTYPE, op_type(PrimType.TYPE)) ]
         case Prim1(op=op, ex1=inside, span=SourceSpan(lineno=lineno)):
             return compile_expr(inside) + \
                 [ mov(RPARAMS[0], Const(lineno)), mov(RPARAMS[1], RVAL), mov(RPARAMS[2], RTYPE), call(sym_op(op)) ]

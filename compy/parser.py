@@ -1,8 +1,8 @@
 import ast
 from typing import List
-from compy.syntax import ID, KW_UNARY_OPS, Assignment, Binding, Expression, Integer, NewScope, NoOp, Prim1, Scope, Statement, Unit
+from compy.syntax import Assignment, Binding, Expression, GetType, Integer, NewScope, NoOp, Prim1, Scope, Statement, Unit
 import compy.syntax as syn
-from compy.common import CompileError, SourceSpan
+from compy.common import ID, CompileError, SourceSpan
 import compy.keywords as kw
 
 def validate_name(span: SourceSpan, name: ID):
@@ -19,8 +19,11 @@ def parse_expr(ex: ast.expr) -> Expression:
     span = span_ast(ex)
     match ex:
         case ast.Name(id=name):
-            validate_name_ast(ex)
-            return syn.Name(span=span, name=name)
+            if kw.is_type_name(name):
+                return syn.TypeLiteral(span=span, ty=kw.name_to_type(name))
+            else:
+                validate_name_ast(ex)
+                return syn.Name(span=span, name=name)
         case ast.Constant(value=v):
             match v:
                 case None:
@@ -30,8 +33,10 @@ def parse_expr(ex: ast.expr) -> Expression:
                 # TODO: booleans, strings, etc.
                 case _:
                     raise CompileError(msg=f"Unknown literal {v}", span=span)
+        case ast.Call(func=ast.Name(id=kw.TYPE), args=[ex1]):
+            return GetType(span=span, ex=parse_expr(ex1))
         case ast.Call(func=ast.Name(id=(kw.PRINT | kw.ADD1 | kw.SUB1 as func)), args=[ex1]):
-            return Prim1(span=span, op=KW_UNARY_OPS[func], ex1=parse_expr(ex1))
+            return Prim1(span=span, op=kw.KW_UNARY_OPS[func], ex1=parse_expr(ex1))
         case ast.UnaryOp(op=ast.USub(), operand=ast.Constant(value=int(x))):
             return Integer(span=span, value=-x)
         case ast.UnaryOp(op=ast.USub(), operand=ex1):

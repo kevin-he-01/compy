@@ -1,0 +1,6 @@
+var(x = NoneType)
+print(x)
+x = type(8)
+print(x)
+x = type
+print(x)

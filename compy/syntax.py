@@ -1,11 +1,10 @@
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Generic, Iterable, List, TypeVar
+from typing import Generic, Iterable, List, TypeAlias, TypeVar
 
 import compy.common
-import compy.keywords as kw
 
-ID = str
+ID: TypeAlias = 'compy.common.ID'
 
 # Tag information
 
@@ -119,17 +118,25 @@ class Integer(Leaf,Expression):
     value: int
 
 @dataclass
+class TypeLiteral(Leaf,Expression):
+    ty: 'compy.common.PrimType'
+
+@dataclass
 class Unit(Leaf,Expression):
     # The only instance of 'None'
     pass
+
+@dataclass
+class GetType(Expression): # Could be a Prim1, but do not need ex to be immediate for ANF
+    ex: Expression
+    def children(self) -> Iterable['Node']:
+        return [self.ex]
 
 class UnaryOp(Enum):
     NEGATE = auto()
     PRINT = auto() # For now, will make it a function later
     ADD1 = auto()
     SUB1 = auto()
-
-KW_UNARY_OPS = {kw.PRINT: UnaryOp.PRINT, kw.ADD1: UnaryOp.ADD1, kw.SUB1: UnaryOp.SUB1}
 
 @dataclass
 class Prim1(Expression):
