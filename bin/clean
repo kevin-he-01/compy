@@ -4,4 +4,4 @@ shopt -s globstar
 
 cd "$(dirname -- "${BASH_SOURCE[0]}")" || exit
 
-rm -f ../**/*.nasm
+rm -f ../**/*.nasm ../**/*.out
