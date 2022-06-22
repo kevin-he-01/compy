@@ -7,6 +7,8 @@ DEPENDS := $(patsubst %.c,%.d,$(SOURCES))
 ERROR := -Werror=all -Werror=incompatible-pointer-types -Werror=int-conversion -Wno-error=unused-parameter
 WARNING := -Wall -Wextra -Wformat=2 -Wconversion -Wduplicated-cond -Wlogical-op -Wshift-overflow=2 -Wshadow $(ERROR)
 
+CFLAGS := -O3
+
 TARGET = runtime.o
 
 .PHONY: all clean
