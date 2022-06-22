@@ -83,11 +83,11 @@ class UnboundVarError(CompileError):
 
 class ImmutableVarError(CompileError):
     def __init__(self, var: ID, span: SourceSpan):
-        super().__init__(f"Assignment to read-only variable (val) '{var}'", span)
+        super().__init__(f"Assignment to read-only variable (val or let) '{var}'", span)
 
 class MutableClosureVarError(CompileError):
     def __init__(self, var: ID, span: SourceSpan):
-        super().__init__(f"Variable defined outside closure must be immutable (val): '{var}' is mutable", span)
+        super().__init__(f"Variable defined outside closure must be immutable (val or let): '{var}' is mutable (var)", span)
 
 def report_error(info: CompilerInfo, code: str, ce: CompileError):
     lines = code.splitlines()

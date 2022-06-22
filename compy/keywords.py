@@ -8,12 +8,13 @@ PRINT = 'print'
 ADD1 = 'add1'
 SUB1 = 'sub1'
 UNDERSCORE = '_'
-LOOP = 'loop'
+# LOOP = 'loop'
 TYPE = 'type'
+LET = 'let'
 
 PRIM_TYPE_MAP = {'int': PrimType.INT, 'NoneType': PrimType.NONE, 'type': PrimType.TYPE}
 
-ALL_KEYWORDS = {VAL, VAR, PRINT, ADD1, SUB1, UNDERSCORE, TYPE, *PRIM_TYPE_MAP.keys()}
+ALL_KEYWORDS = {VAL, VAR, PRINT, ADD1, SUB1, UNDERSCORE, TYPE, LET, *PRIM_TYPE_MAP.keys()}
 
 KW_UNARY_OPS = {PRINT: UnaryOp.PRINT, ADD1: UnaryOp.ADD1, SUB1: UnaryOp.SUB1}
 
