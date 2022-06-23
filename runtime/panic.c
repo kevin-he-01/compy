@@ -40,7 +40,7 @@ void panic(location_t location, reason_t reason, const char *fmt, ...) {
     va_end(args);
     putchar('\n');
     dump_panic_reason(reason_str);
-    exit(1);
+    exit(PANIC_EXIT_CODE);
 }
 
 // TODO: inline this

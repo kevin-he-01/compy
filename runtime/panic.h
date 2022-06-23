@@ -3,6 +3,9 @@
 
 #include "common.h"
 
+// Same choice as Rust, help distinguish between the common programmatic exit(1)
+#define PANIC_EXIT_CODE (101)
+
 typedef long location_t; // for debug information
 
 typedef enum {
