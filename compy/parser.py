@@ -16,12 +16,9 @@ def validate_name_ast(name: ast.Name):
 def span_ast(a: ast.AST) -> SourceSpan:
     return SourceSpan(a.lineno, a.end_lineno, a.col_offset, a.end_col_offset)
 
-def parse_let(span: SourceSpan, args: List[ast.expr]) -> syn.ExprScope:
-    if len(args) == 0:
-        raise CompileError(msg="let expression cannot have empty body", span=span)
-    body = args[-1]
+def parse_let(span: SourceSpan, binds: List[ast.expr], body: ast.expr) -> syn.ExprScope:
     def iter_args() -> Iterable[syn.Statement]:
-        for arg in args[:-1]:
+        for arg in binds:
             span_arg = span_ast(arg)
             match arg:
                 case ast.NamedExpr(target=ast.Name(id=id_name, ctx=ast.Store()) as name, value=src):
@@ -53,8 +50,8 @@ def parse_expr(ex: ast.expr) -> syn.Expression:
             return syn.GetType(span=span, ex=parse_expr(ex1))
         case ast.Call(func=ast.Name(id=(kw.PRINT | kw.ADD1 | kw.SUB1 as func)), args=[ex1], keywords=[]):
             return syn.Prim1(span=span, op=kw.KW_UNARY_OPS[func], ex1=parse_expr(ex1))
-        case ast.Call(func=ast.Name(id=kw.LET), args=args, keywords=[]):
-            return parse_let(span, args)
+        case ast.Call(func=ast.Name(id=kw.LET), args=[*binds, body], keywords=[]):
+            return parse_let(span, binds, body)
         case ast.UnaryOp(op=ast.USub(), operand=ast.Constant(value=int(x))):
             return syn.Integer(span=span, value=-x)
         case ast.UnaryOp(op=ast.USub(), operand=ex1):
