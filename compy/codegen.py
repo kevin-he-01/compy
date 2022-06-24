@@ -1,5 +1,3 @@
-from typing import List
-
 from compy.asm import (AsmLine, Const, Label, Reg, Symbol, add, call, extern,
                        global_, mov, pop, push, ret, sub)
 from compy.common import (MAIN, CompiledFunction, PrimType, SourceSpan, concat,
@@ -9,7 +7,7 @@ from compy.syntax import (Assignment, Binding, EvalExpr, ExprScope, Expression, 
                           Name, NewScope, NoOp, Prim1, Scope, Statement,
                           TypeLiteral, UnaryOp, Unit, VarInfo)
 
-CODE = List[AsmLine]
+CODE = list[AsmLine]
 
 RVAL = Reg.RAX
 RTYPE = Reg.RDX
@@ -110,7 +108,7 @@ def compile_func(func: CompiledFunction) -> CODE:
         ret(),
     ]
 
-def compile_prog(funcs: List[CompiledFunction]) -> CODE:
+def compile_prog(funcs: list[CompiledFunction]) -> CODE:
     lines: CODE = [
         global_(MAIN),
         extern(PRINT_),

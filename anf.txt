@@ -1,0 +1,4 @@
+ANF steps:
+
+Make children traversable (and settable) by default. Accept either <type deriving Node> or list[<type deriving Node>]
+as well as Imm[type of above] as a flag to indicate the argument need to be an immediate to be compiled

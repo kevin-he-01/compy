@@ -1,11 +1,10 @@
-from typing import List
 from compy.common import ImmutableVarError, IntegerOOB, UnboundVarError
 from tests import common
 
 CHECKER_PREFIX = 'checker'
 
 class TestIntegerBounds(common.CompyTestCase):
-    def prefix(self) -> List[str]:
+    def prefix(self) -> list[str]:
         return [CHECKER_PREFIX, 'int-bounds']
     
     def test_big(self):
@@ -24,7 +23,7 @@ class TestIntegerBounds(common.CompyTestCase):
         self.compile_failure('small', IntegerOOB)
 
 class TestMisc(common.CompyTestCase):
-    def prefix(self) -> List[str]:
+    def prefix(self) -> list[str]:
         return [CHECKER_PREFIX, 'misc']
     
     def test_scope_e0(self):

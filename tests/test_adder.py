@@ -1,11 +1,10 @@
-from typing import List
 from tests import common
 
 
 ADDER = 'adder'
 
 class TestAdder(common.CompyTestCase):
-    def prefix(self) -> List[str]:
+    def prefix(self) -> list[str]:
         return [ADDER]
     
     def test_print0(self):
@@ -36,7 +35,7 @@ class TestAdder(common.CompyTestCase):
         self.success_case('expr', b'5\n')
 
 class TestTypedAdder(common.CompyTestCase):
-    def prefix(self) -> List[str]:
+    def prefix(self) -> list[str]:
         return [ADDER, 'typed']
     
     def test_print_none(self):

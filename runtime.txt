@@ -79,3 +79,7 @@ to check for div by zero/overflow on division (only one case in signed numbers L
     wrapping versions of those
 1: NoneType
 2: type (holding a value itself representing a primitive type)
+
+Support calling "library functions" that are variadic:
+print(): accept any number of args
+input(): 0 or 1, depending on whether there is a prompt

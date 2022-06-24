@@ -1,5 +1,5 @@
 import ast
-from typing import Iterable, List
+from typing import Iterable
 
 import compy.keywords as kw
 import compy.syntax as syn
@@ -16,7 +16,7 @@ def validate_name_ast(name: ast.Name):
 def span_ast(a: ast.AST) -> SourceSpan:
     return SourceSpan(a.lineno, a.end_lineno, a.col_offset, a.end_col_offset)
 
-def parse_let(span: SourceSpan, binds: List[ast.expr], body: ast.expr) -> syn.ExprScope:
+def parse_let(span: SourceSpan, binds: list[ast.expr], body: ast.expr) -> syn.ExprScope:
     def iter_args() -> Iterable[syn.Statement]:
         for arg in binds:
             span_arg = span_ast(arg)
@@ -72,7 +72,7 @@ def parse_stmt_expr(span_stmt: SourceSpan, ex: ast.expr) -> syn.Statement:
     match ex:
         case ast.Call(func=ast.Name(id=(kw.VAL | kw.VAR as ty)), args=[], keywords=[ast.keyword(arg=name, value=ex) as keyword]):
             mutable = ty == kw.VAR
-            if name == None:
+            if name is None:
                 raise CompileError('Bad val/var binding', span_stmt)
             validate_name(span_ast(keyword), name)
             return syn.Binding(span=span_stmt, mutable=mutable, name=name, init_val=parse_expr(ex))
@@ -94,7 +94,7 @@ def parse_statement(s: ast.stmt) -> syn.Statement:
             print(ast.dump(s, indent=2))
             raise CompileError(msg="Unknown statement", span=span)
 
-def parse_statements(ss: List[ast.stmt]) -> syn.Scope:
+def parse_statements(ss: list[ast.stmt]) -> syn.Scope:
     return syn.Scope([parse_statement(s) for s in ss])
 
 # Can throw SyntaxError's

@@ -1,4 +1,3 @@
-from typing import List
 from compy.common import CompileError
 from tests import common
 
@@ -6,7 +5,7 @@ from tests import common
 BOA = 'boa'
 
 class TestLet(common.CompyTestCase):
-    def prefix(self) -> List[str]:
+    def prefix(self) -> list[str]:
         return [BOA, 'let']
 
     def test_shadow(self):

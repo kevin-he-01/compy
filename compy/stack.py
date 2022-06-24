@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import List
 from compy.asm import MemRegOffset, Reg
 from compy.common import CompiledFunction
 
@@ -53,7 +52,7 @@ class AllocationWalker(NodeWalker[StackPosition]):
             case _:
                 super().walk(node, ctx)
 
-def allocate_stack(funcs: List[CompiledFunction]):
+def allocate_stack(funcs: list[CompiledFunction]):
     for func in funcs:
         alloc = StackAllocator()
         AllocationWalker().walk(func.body, alloc.root)

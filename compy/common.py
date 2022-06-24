@@ -1,7 +1,7 @@
 from enum import Enum
 from functools import reduce
 from dataclasses import dataclass, field
-from typing import Iterable, List, TextIO, TypeVar
+from typing import Iterable, TextIO, TypeVar
 
 import compy.syntax
 
@@ -12,7 +12,7 @@ ID = str
 
 @dataclass
 class CompilerState:
-    errors: List['CompileError'] = field(default_factory=list)
+    errors: list['CompileError'] = field(default_factory=list)
     def err(self, error: 'CompileError'):
         self.errors.append(error)
 
@@ -98,23 +98,23 @@ def report_error(info: CompilerInfo, code: str, ce: CompileError): # pragma: no 
         line = lines[span.lineno-1]
         error(line)
         end = span.end_col_offset
-        if end == None:
+        if end is None:
             end = len(line)
         error(' ' * span.col_offset + '^' * (end - span.col_offset))
     else:
         error('<Multiline error>')
 
 T = TypeVar('T')
-def concat(tss: Iterable[List[T]]) -> List[T]:
-    emp: List[T] = []
+def concat(tss: Iterable[list[T]]) -> list[T]:
+    emp: list[T] = []
     return reduce(lambda x, y: x + y, tss, emp)
 
 O = TypeVar('O')
 def unwrap(i: O | None, msg: str | None = None) -> O:
-    if msg == None:
-        assert i != None
+    if msg is None:
+        assert i is not None
     else:
-        assert i != None, msg
+        assert i is not None, msg
     return i
 
 MAIN = 'compy_main'

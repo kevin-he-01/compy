@@ -3,11 +3,11 @@ from enum import Enum, auto
 import io
 import os
 import subprocess
-from typing import Any, List, Type
+from typing import Any, Type
 import unittest, compy
 from compy.common import CompileError
 
-PATH_SPEC = str | List[str]
+PATH_SPEC = str | list[str]
 
 EXIT_SUCCESS = 0
 TESTCASE_DIR = './testcases/'
@@ -29,10 +29,10 @@ class PanicReason(AutoName):
 
 class CompyTestCase(unittest.TestCase):
     # Can override to change the prefix path to test cases
-    def prefix(self) -> List[str]:
+    def prefix(self) -> list[str]:
         return []
     
-    def assertOutput(self, args: List[str], expected_stdout: bytes,
+    def assertOutput(self, args: list[str], expected_stdout: bytes,
                     expected_stderr: bytes = b'', expected_exit: int = EXIT_SUCCESS,
                     stdin: bytes = b''):
         progname = args[0]
@@ -82,11 +82,11 @@ class CompyTestCase(unittest.TestCase):
                     # Can happen due to SIGSEGV/abnormal termination as well
                     self.fail('Expected program to panic but no panics observed')
 
-    def get_full_path(self, short: PATH_SPEC) -> List[str]:
+    def get_full_path(self, short: PATH_SPEC) -> list[str]:
         match short:
             case str(s):
                 return self.prefix() + [s]
-            case _: # List
+            case _: # list
                 return self.prefix() + short
     
     # BEGIN TESTCASE HELPERS (similar to builder pattern, high levels ways to construct and run tests)
@@ -121,6 +121,6 @@ OUTCOME = Success | CompilerFailure | RuntimeFailure
 
 @dataclass
 class ProgramTestCase:
-    src_path: List[str]
+    src_path: list[str]
     expected_outcome: OUTCOME
     stdin: bytes

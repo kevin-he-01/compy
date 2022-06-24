@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Generic, Iterable, List, TypeAlias, TypeVar
+from typing import Generic, Iterable, TypeAlias, TypeVar
 
 import compy.common
 
@@ -43,7 +43,7 @@ INFO_ID = VarInfo
 
 @dataclass
 class ScopeInformation:
-    funcs: List[FuncInfo]
+    funcs: list[FuncInfo]
 
 # Abstract AST types
 
@@ -75,7 +75,7 @@ class EvalExpr(Statement): # Evaluate an expression for its side effects only, i
 
 @dataclass
 class Scope(Node):
-    statements: List[Statement]
+    statements: list[Statement]
     info: ScopeInformation | None = None
     def children(self) -> Iterable['Node']:
         return self.statements
@@ -148,7 +148,7 @@ class UnaryOp(Enum):
 class Prim1(Expression):
     op: UnaryOp
     ex1: Expression
-    def children(self) -> List['Expression']:
+    def children(self) -> list['Expression']:
         return [self.ex1]
 
 @dataclass
@@ -157,7 +157,7 @@ class ExprScope(Expression):
     def children(self) -> Iterable['Node']:
         return [self.scope]
 
-def mk_exprscope(span: 'compy.common.SourceSpan', ss: List[Statement], expr: Expression):
+def mk_exprscope(span: 'compy.common.SourceSpan', ss: list[Statement], expr: Expression):
     return ExprScope(span=span, scope=Scope(ss + [EvalExpr(span=expr.span, expr=expr)]))
 
 # TODO: add function expr AST node that generates a unique ID upon instantiation

@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from typing import Dict, List
 
 from compy.common import (ID, MAIN, CompiledFunction, CompilerState,
                           ImmutableVarError, MutableClosureVarError,
@@ -9,13 +8,13 @@ from compy.syntax import (Assignment, Binding, Name, Node, NodeWalker, Scope,
 
 MAIN_ID = 1
 
-def tag(state: CompilerState, top: Scope) -> List[CompiledFunction]:
+def tag(state: CompilerState, top: Scope) -> list[CompiledFunction]:
     funcs = tag_functions(state, top)
     tag_variables(state, top)
     return funcs
 
 # First pass, tag scopes with list of functions
-def tag_functions(state: CompilerState, top: Scope) -> List[CompiledFunction]:
+def tag_functions(state: CompilerState, top: Scope) -> list[CompiledFunction]:
     FunctionTagger(state).walk(top, None)
     # TODO: extract functions discovered from instance variables
     return [CompiledFunction(symbol=MAIN, body=top, id=MAIN_ID)]
@@ -43,7 +42,7 @@ class FunctionTagger(NodeWalker[None]):
 @dataclass
 class VariableContext:
     current_func_id: int
-    bindings: Dict[ID, VarInfo] = field(default_factory=dict)
+    bindings: dict[ID, VarInfo] = field(default_factory=dict)
 
     def clone(self):
         return VariableContext(current_func_id=self.current_func_id, bindings=dict(self.bindings))
@@ -78,7 +77,7 @@ class VariableTagger(NodeWalker[VariableContext]):
                 # Name is a leaf so no need to super().walk
             case Assignment(name=name, target_span=span):
                 super().walk(node, ctx)
-                if (info := reference_name(name, span)) == None:
+                if (info := reference_name(name, span)) is None:
                     return
                 node.info = info
                 if not info.mutable:

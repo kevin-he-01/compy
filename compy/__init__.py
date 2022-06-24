@@ -32,7 +32,7 @@ def main(args: Sequence[str] | None = None, stdout: TextIO = sys.stdout, stderr:
     if not source.endswith(SUFFIX): # pragma: no cover
         raise compy.common.UserError(f'Source file "{source}" does not end in {SUFFIX}')
     prefix = source[:-len(SUFFIX)]
-    if out_path == None: # pragma: no cover
+    if out_path is None: # pragma: no cover
         out_path = prefix + '.out'
     flags = compy.common.DebugFlags(d_pipeline, d_asm, d_obj)
     info = compy.common.CompilerInfo(source, prefix, out_path, flags, stdout, stderr)

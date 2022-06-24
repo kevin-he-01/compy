@@ -3,7 +3,7 @@ from enum import Enum
 import os
 import subprocess
 import tempfile
-from typing import List, TextIO
+from typing import TextIO
 
 from compy.common import CompilerInfo
 
@@ -88,7 +88,7 @@ class Label(AsmLine):
 @dataclass
 class Instruction(AsmLine):
     mnemonic: str
-    operands: List[Operand]
+    operands: list[Operand]
     def assemble(self) -> str:
         return f'\t{self.mnemonic} {", ".join(operand.assemble() for operand in self.operands)}'
 
@@ -137,14 +137,14 @@ def ret():
 
 PREAMBLE = "section .text\n"
 
-def output(dst: TextIO, lines: List[AsmLine]):
+def output(dst: TextIO, lines: list[AsmLine]):
     dst.writelines(line.asm_line() for line in lines)
 
 RUNTIME_OBJ = 'runtime.o'
 
-def build(info: CompilerInfo, lines: List[AsmLine]):
+def build(info: CompilerInfo, lines: list[AsmLine]):
     oprint = info.print
-    def run_cmd(args: List[str]):
+    def run_cmd(args: list[str]):
         oprint('+ ' + ' '.join(args))
         subprocess.check_call(args)
     with tempfile.TemporaryDirectory() as tmpdir:
