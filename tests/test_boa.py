@@ -18,3 +18,5 @@ class TestLet(common.CompyTestCase):
     def test_empty(self):
         self.success_case('empty', b'NoneType\n')
     
+    def test_nested(self):
+        self.success_case('nested', b'9\nNone\n10\n7\n')

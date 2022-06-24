@@ -1,0 +1,9 @@
+val(y = 7)
+val(x = let(
+    x := add1(add1(y)),
+    none := print(x),
+    unused := print(none),
+    add1(x)
+))
+print(x)
+print(y)
