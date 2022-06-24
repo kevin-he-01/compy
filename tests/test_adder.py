@@ -22,6 +22,9 @@ class TestAdder(common.CompyTestCase):
 
     def test_vars1(self):
         self.success_case('vars1', VARS1_OUTPUT)
+
+    def test_vars1_pass(self):
+        self.success_case('vars1-pass', VARS1_OUTPUT)
     
     def test_vars2(self):
         self.success_case('vars2', VARS2_OUTPUT)
@@ -62,6 +65,9 @@ class TestTypedAdder(common.CompyTestCase):
 
     def test_types_mut(self):
         self.success_case('types-mut', b'NoneType\nint\ntype\n')
+
+    def test_types_var(self):
+        self.success_case('types-var', b'int\nNoneType\n')
 
 STRESS_OUTPUT = b'''-123
 123

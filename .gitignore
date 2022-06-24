@@ -139,3 +139,6 @@ dmypy.json
 
 # Dependency files
 *.d
+
+# LCOV as recognized by VSCode
+lcov.info

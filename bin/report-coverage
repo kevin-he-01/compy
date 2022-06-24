@@ -1,0 +1,11 @@
+#! /bin/bash
+
+cd "$(dirname -- "${BASH_SOURCE[0]}")/.." || exit
+
+set -e
+set -x
+
+coverage run -m unittest discover -s tests -v # Generate .coverage
+coverage lcov -o lcov.info # For VSCode to understand
+coverage html # Allow browsers to view report
+coverage report # Give a summary

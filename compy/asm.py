@@ -14,8 +14,6 @@ class Operand:
     # To assembly format
     def assemble(self) -> str:
         raise NotImplementedError
-    def __str__(self) -> str:
-        return self.assemble()
 
 class Reg(Operand, Enum):
     RAX = 'rax'
@@ -80,8 +78,6 @@ class AsmLine:
         raise NotImplementedError
     def asm_line(self):
         return self.assemble() + EOL
-    def __str__(self) -> str:
-        return self.assemble()
 
 @dataclass
 class Label(AsmLine):

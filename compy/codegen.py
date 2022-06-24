@@ -71,7 +71,7 @@ def compile_expr(ex: Expression) -> CODE:
             return load_none()
         case ExprScope(scope=scope):
             return compile_scope(scope)
-        case _:
+        case _: # pragma: no cover
             assert False, f'Unhandled expression: {type(ex)}'
 
 # TODO: accept return label as second arg for compile_scope and compile_statement
@@ -87,7 +87,7 @@ def compile_statement(st: Statement) -> CODE:
             return []
         case NewScope(body=scope):
             return compile_scope(scope)
-        case _:
+        case _: # pragma: no cover
             assert False, f'Unhandled statement: {type(st)}'
 
 def compile_scope(scope: Scope) -> CODE:

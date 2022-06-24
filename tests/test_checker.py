@@ -38,3 +38,6 @@ class TestMisc(common.CompyTestCase):
 
     def test_ro_e0(self):
         self.compile_failure('ro-e0', ImmutableVarError)
+
+    def test_assign_ub(self):
+        self.compile_failure('assign-ub', UnboundVarError)

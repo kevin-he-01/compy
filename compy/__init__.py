@@ -29,23 +29,21 @@ def main(args: Sequence[str] | None = None, stdout: TextIO = sys.stdout, stderr:
     run: bool = options.run
     out_path: str | None = options.output
 
-    if not source.endswith(SUFFIX):
+    if not source.endswith(SUFFIX): # pragma: no cover
         raise compy.common.UserError(f'Source file "{source}" does not end in {SUFFIX}')
     prefix = source[:-len(SUFFIX)]
-    if out_path == None:
+    if out_path == None: # pragma: no cover
         out_path = prefix + '.out'
     flags = compy.common.DebugFlags(d_pipeline, d_asm, d_obj)
     info = compy.common.CompilerInfo(source, prefix, out_path, flags, stdout, stderr)
     compy.pipeline.run(info)
-    if run:
+    if run: # pragma: no cover
         print('=====Running executable=====')
         os.execl(info.out_path, info.out_path)
 
-def start():
+def start(): # pragma: no cover
     try:
         main()
     except (compy.common.UserError, OSError) as e:
         print(f'Error: {e}', file=sys.stderr)
         sys.exit(1)
-    # except (AssertionError, NotImplementedError) as e:
-    #     raise e

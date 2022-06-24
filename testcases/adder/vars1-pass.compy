@@ -1,0 +1,29 @@
+pass
+var(y = 0)
+pass
+print(y)
+with _:
+    var(x = 4)
+    print(x)
+    pass
+    pass
+    y = sub1(x)
+    x = -x
+    print(x)
+print(y)
+pass
+pass
+y = sub1(sub1(y))
+pass
+print(y)
+pass
+with _:
+    var(x = 11)
+    print(x)
+    pass
+    x = add1(x)
+    print(x)
+    y = -x
+print(y)
+pass
+pass

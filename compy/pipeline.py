@@ -14,7 +14,7 @@ DEBUG_HEADER_WIDTH = 50
 def run(info: CompilerInfo):
     oprint = info.print
     def debug(step_name: str, action: Callable[[], None]):
-        if info.debug_flags.pipeline:
+        if info.debug_flags.pipeline: # pragma: no cover
             oprint('=' * DEBUG_HEADER_WIDTH)
             oprint(step_name.center(DEBUG_HEADER_WIDTH, '='))
             oprint('=' * DEBUG_HEADER_WIDTH)

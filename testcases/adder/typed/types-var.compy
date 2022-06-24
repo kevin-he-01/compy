@@ -1,0 +1,4 @@
+var(x = 1)
+print(type(x))
+x = None
+print(type(x))

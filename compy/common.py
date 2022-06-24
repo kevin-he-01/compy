@@ -89,7 +89,7 @@ class MutableClosureVarError(CompileError):
     def __init__(self, var: ID, span: SourceSpan):
         super().__init__(f"Variable defined outside closure must be immutable (val or let): '{var}' is mutable (var)", span)
 
-def report_error(info: CompilerInfo, code: str, ce: CompileError):
+def report_error(info: CompilerInfo, code: str, ce: CompileError): # pragma: no cover
     lines = code.splitlines()
     span = ce.span
     error = info.error

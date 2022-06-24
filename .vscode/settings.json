@@ -6,7 +6,7 @@
         "*.h": "c"
     },
     "terminal.integrated.env.linux": {
-        "PATH": "${workspaceFolder}/bin:${env:PATH}"
+        "PATH": "${workspaceFolder}/bin:${env:HOME}/.local/bin:${env:HOME}/bin:${env:PATH}"
     },
     "explorer.sortOrder": "type"
 }
