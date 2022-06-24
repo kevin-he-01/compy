@@ -77,7 +77,7 @@ def parse_stmt_expr(span_stmt: SourceSpan, ex: ast.expr) -> syn.Statement:
             validate_name(span_ast(keyword), name)
             return syn.Binding(span=span_stmt, mutable=mutable, name=name, init_val=parse_expr(ex))
         case _:
-            return parse_expr(ex)
+            return syn.EvalExpr(span=span_stmt, expr=parse_expr(ex))
 
 def parse_statement(s: ast.stmt) -> syn.Statement:
     span = span_ast(s)

@@ -5,7 +5,7 @@ from compy.asm import (AsmLine, Const, Label, Reg, Symbol, add, call, extern,
 from compy.common import (MAIN, CompiledFunction, PrimType, SourceSpan, concat,
                           unwrap)
 from compy.stack import op_stack
-from compy.syntax import (Assignment, Binding, ExprScope, Expression, GetType, Integer,
+from compy.syntax import (Assignment, Binding, EvalExpr, ExprScope, Expression, GetType, Integer,
                           Name, NewScope, NoOp, Prim1, Scope, Statement,
                           TypeLiteral, UnaryOp, Unit, VarInfo)
 
@@ -77,8 +77,8 @@ def compile_expr(ex: Expression) -> CODE:
 # TODO: accept return label as second arg for compile_scope and compile_statement
 def compile_statement(st: Statement) -> CODE:
     match st:
-        case Expression():
-            return compile_expr(st)
+        case EvalExpr(expr=ex):
+            return compile_expr(ex)
         case Assignment(info=info, src=src_expr):
             return compile_expr(src_expr) + assign(unwrap(info))
         case Binding(info=info, init_val=src_expr):

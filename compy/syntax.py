@@ -62,8 +62,14 @@ class Statement(Node):
     span: 'compy.common.SourceSpan'
 
 @dataclass
-class Expression(Statement):
-    pass
+class Expression(Node):
+    span: 'compy.common.SourceSpan'
+
+@dataclass
+class EvalExpr(Statement): # Evaluate an expression for its side effects only, ignoring its value
+    expr: Expression
+    def children(self) -> Iterable['Node']:
+        return [self.expr]
 
 # A scope can contain a list of statements
 
@@ -73,10 +79,6 @@ class Scope(Node):
     info: ScopeInformation | None = None
     def children(self) -> Iterable['Node']:
         return self.statements
-
-class EvaluableScope(Scope):
-    def __init__(self, statements: List[Statement], ret: Expression):
-        super().__init__(statements + [ret])
 
 # Begin concrete AST statements
 
@@ -151,12 +153,12 @@ class Prim1(Expression):
 
 @dataclass
 class ExprScope(Expression):
-    scope: EvaluableScope
+    scope: Scope
     def children(self) -> Iterable['Node']:
         return [self.scope]
 
 def mk_exprscope(span: 'compy.common.SourceSpan', ss: List[Statement], expr: Expression):
-    return ExprScope(span=span, scope=EvaluableScope(ss, expr))
+    return ExprScope(span=span, scope=Scope(ss + [EvalExpr(span=expr.span, expr=expr)]))
 
 # TODO: add function expr AST node that generates a unique ID upon instantiation
 # TODO: add class that encloses Scope inside Expression to allow ANF-transforms/let-bindings
