@@ -23,6 +23,7 @@ class AutoName(Enum):
 class PanicReason(AutoName):
     TYPE_ERROR = auto()
     ARITH_OVERFLOW = auto()
+    DIV_BY_ZERO = auto()
 
     def get_str(self) -> str:
         return self.value

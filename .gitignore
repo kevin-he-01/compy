@@ -142,3 +142,6 @@ dmypy.json
 
 # LCOV as recognized by VSCode
 lcov.info
+
+# Temporary testing
+samples/test.compy

@@ -10,7 +10,8 @@ typedef long location_t; // for debug information
 
 typedef enum {
     TYPE_ERROR,
-    ARITH_OVERFLOW
+    ARITH_OVERFLOW,
+    DIV_BY_ZERO
 } reason_t; // Panic reasons
 
 extern const char* panic_dumpfile;

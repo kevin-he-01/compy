@@ -6,13 +6,16 @@
 
 const char* panic_dumpfile; // Used to facilitate testing
 
-const char *str_reason(reason_t reason) {
+static inline const char *str_reason(reason_t reason) {
     switch (reason) {
     case TYPE_ERROR:
         return "TYPE_ERROR";
     
     case ARITH_OVERFLOW:
         return "ARITH_OVERFLOW";
+
+    case DIV_BY_ZERO:
+        return "DIV_BY_ZERO";
     }
     assertm(0, "Nonexhaustive enum match");
     return "";

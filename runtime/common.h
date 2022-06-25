@@ -11,7 +11,7 @@
 typedef unsigned long type_t;
 
 typedef union {
-    long si_int; // signed int
+    signed long si_int; // signed int
     unsigned long un_int; // unsigned int
     double flt; // floating point
     type_t type;

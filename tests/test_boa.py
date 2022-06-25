@@ -4,6 +4,42 @@ from tests import common
 
 BOA = 'boa'
 
+class TestBoa(common.CompyTestCase):
+    def prefix(self) -> list[str]:
+        return [BOA]
+
+    def test_plus0(self):
+        self.success_case('plus0', b'2\n')
+    
+    def test_plus1(self):
+        self.success_case('plus1', b'1110\n')
+
+    def test_plus_e_ovf(self):
+        for i in range(1, 5+1):
+            self.runtime_failure(f'plus-e-ovf{i}', common.PanicReason.ARITH_OVERFLOW)
+    
+    def test_mult_e_ovf(self):
+        for i in range(1, 3+1):
+            self.runtime_failure(f'mult-e-ovf{i}', common.PanicReason.ARITH_OVERFLOW)
+
+    def test_arith(self):
+        self.success_case('arith', b'889\n-98\n8\n10\n221\n-30\n-30\n39\n84\n10000\n')
+
+    def test_stress0(self):
+        self.success_case('stress0', b'7006652\n')
+
+    def test_div0(self):
+        self.success_case('div0', b'256\n255\n-3\n-3\n-2\n2\n0\n')
+
+    def test_div_e_ovf(self):
+        self.runtime_failure('div-e-ovf', common.PanicReason.ARITH_OVERFLOW)
+
+    def test_div_e_zero(self):
+        self.runtime_failure('div-e-zero', common.PanicReason.DIV_BY_ZERO)
+
+    def test_mod0(self):
+        self.success_case('mod0', b'68392\n')
+
 class TestLet(common.CompyTestCase):
     def prefix(self) -> list[str]:
         return [BOA, 'let']

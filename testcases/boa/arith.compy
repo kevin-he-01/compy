@@ -1,0 +1,10 @@
+print(1000 - 111) # Expect 889
+print(2 - 100) # Expect -98
+print(-2 - (-10)) # Expect 8
+print(0 - (-10)) # Expect 10
+print(13 * 17) # Expect 221
+print((-5) * 6) # Expect -30
+print(5 * (-6)) # Ditto
+print(9 + 5 * 6) # 39
+print((9 + 5) * 6) # 84
+print((-100) * (-100)) # 10_000

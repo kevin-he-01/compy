@@ -4,8 +4,8 @@ from compy.asm import (AsmLine, Const, Label, Operand, Reg, Symbol, WordSize, ad
 from compy.common import (MAIN, CompiledFunction, PrimType, SourceSpan, concat,
                           unwrap)
 from compy.stack import op_stack
-from compy.syntax import (IMM_EXPR, Assignment, Binding, EvalExpr, ExprScope, Expression, GetType, Integer,
-                          Name, NewScope, NoOp, Prim1, Scope, Statement,
+from compy.syntax import (IMM_EXPR, Assignment, BinOp, Binding, EvalExpr, ExprScope, Expression, GetType, Integer,
+                          Name, NewScope, NoOp, Prim1, Prim2, Scope, Statement,
                           TypeLiteral, UnaryOp, Unit, VarInfo)
 
 CODE = list[AsmLine]
@@ -15,12 +15,6 @@ RTYPE = Reg.RDX
 
 # Registers used to pass arguments on the calling convention
 RPARAMS = [Reg.RDI, Reg.RSI, Reg.RDX, Reg.RCX, Reg.R8, Reg.R9]
-
-# External functions
-PRINT = 'print'
-NEGATE = 'negate'
-ADD1 = 'add1'
-SUB1 = 'sub1'
 
 def op_type(ty: PrimType):
     return Const(ty.code())
@@ -41,15 +35,10 @@ def load_none() -> CODE:
     return [ mov(RVAL, Const(0)), mov(RTYPE, op_type(PrimType.NONE)) ]
 
 def sym_op(op: UnaryOp) -> Symbol:
-    match op:
-        case UnaryOp.NEGATE:
-            return Symbol(NEGATE)
-        case UnaryOp.PRINT:
-            return Symbol(PRINT)
-        case UnaryOp.ADD1:
-            return Symbol(ADD1)
-        case UnaryOp.SUB1:
-            return Symbol(SUB1)
+    return Symbol(op.symbol())
+
+def sym_binop(op: BinOp) -> Symbol:
+    return Symbol(op.symbol())
 
 def get_var_offset(name: Name) -> int:
     # TODO: when implementing closures, use effective offset from this call frame's stack
@@ -77,6 +66,13 @@ def compile_expr(ex: Expression) -> CODE:
             return compile_expr(ex) + [ mov(RVAL, RTYPE), mov(RTYPE, op_type(PrimType.TYPE)) ]
         case Prim1(op=op, ex1=inside, span=SourceSpan(lineno=lineno)):
             return [ mov(RPARAMS[0], Const(lineno)), lea(RPARAMS[1], imm_op(inside)), call(sym_op(op)) ]
+        case Prim2(op=op, left=left, right=right, span=SourceSpan(lineno=lineno)):
+            return [
+                mov(RPARAMS[0], Const(lineno)),
+                lea(RPARAMS[1], imm_op(left)),
+                lea(RPARAMS[2], imm_op(right)),
+                call(sym_binop(op))
+            ]
         case Unit():
             return load_none()
         case ExprScope(scope=scope):
@@ -123,10 +119,8 @@ def compile_func(func: CompiledFunction) -> CODE:
 def compile_prog(funcs: list[CompiledFunction]) -> CODE:
     lines: CODE = [
         global_(MAIN),
-        extern(PRINT),
-        extern(NEGATE),
-        extern(ADD1),
-        extern(SUB1),
+        *[extern(op.symbol()) for op in UnaryOp],
+        *[extern(op.symbol()) for op in BinOp],
     ]
     for func in funcs:
         lines.extend(compile_func(func))

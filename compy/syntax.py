@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field, fields
-from enum import Enum, auto
+from enum import Enum
 import sys
 from typing import (Annotated, Any, Generic, Iterable, TypeAlias, TypeVar, get_args,
                     get_origin, get_type_hints)
@@ -221,15 +221,36 @@ class GetType(Expression): # Could be a Prim1, but do not need ex to be immediat
     ex: Expression
 
 class UnaryOp(Enum):
-    NEGATE = auto()
-    PRINT = auto() # For now, will make it a function later
-    ADD1 = auto()
-    SUB1 = auto()
+    NEGATE = 'negate'
+    PRINT = 'print' # For now, will make it a function later
+    ADD1 = 'add1'
+    SUB1 = 'sub1'
+
+    # Runtime call symbol
+    def symbol(self) -> str:
+        return self.value
+
+class BinOp(Enum):
+    ADD = 'add'
+    SUB = 'sub'
+    MUL = 'mul'
+    DIV = 'div'
+    MOD = 'mod'
+
+    # Runtime call symbol
+    def symbol(self) -> str:
+        return self.value
 
 @dataclass
 class Prim1(Expression):
     op: UnaryOp
     ex1: IMM_EXPR
+
+@dataclass
+class Prim2(Expression):
+    op: BinOp
+    left: IMM_EXPR
+    right: IMM_EXPR
 
 @dataclass
 class ExprScope(Expression):

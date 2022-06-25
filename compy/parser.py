@@ -28,6 +28,21 @@ def parse_let(span: SourceSpan, binds: list[ast.expr], body: ast.expr) -> syn.Ex
                     raise CompileError(msg="Bindings before the body must be of the form x := <expr>", span=span_arg)
     return syn.mk_exprscope(span, list(iter_args()), parse_expr(body))
 
+def convert_binop(op: ast.operator) -> syn.BinOp:
+    match op:
+        case ast.Add():
+            return syn.BinOp.ADD
+        case ast.Sub():
+            return syn.BinOp.SUB
+        case ast.Mult():
+            return syn.BinOp.MUL
+        case ast.Div():
+            return syn.BinOp.DIV
+        case ast.Mod():
+            return syn.BinOp.MOD
+        case _:
+            raise CompileError('Unsupported binary operation', span_ast(op))
+
 def parse_expr(ex: ast.expr) -> syn.Expression:
     span = span_ast(ex)
     match ex:
@@ -56,6 +71,8 @@ def parse_expr(ex: ast.expr) -> syn.Expression:
             return syn.Integer(span=span, value=-x)
         case ast.UnaryOp(op=ast.USub(), operand=ex1):
             return syn.Prim1(span=span, op=syn.UnaryOp.NEGATE, ex1=parse_expr(ex1))
+        case ast.BinOp(op=op, left=left, right=right):
+            return syn.Prim2(span=span, op=convert_binop(op), left=parse_expr(left), right=parse_expr(right))
         case _:
             raise CompileError(msg="Unknown expression", span=span)
 
