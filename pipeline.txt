@@ -33,3 +33,8 @@ on the stack of the closure (not the outer function)
 >-code-> Assembly file
 >-nasm-> Object file
 >-link-> ELF binary
+
+
+ANF for constants:
+
+put in a constant pool, then take their address in `lea rel` statement

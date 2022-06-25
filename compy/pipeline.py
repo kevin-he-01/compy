@@ -7,6 +7,7 @@ import compy.codegen
 import compy.parser
 import compy.stack
 import compy.tagger
+import compy.anf
 from compy.common import CompileError, CompilerInfo, report_error
 
 DEBUG_HEADER_WIDTH = 50
@@ -42,9 +43,10 @@ def run(info: CompilerInfo):
     # TODO: report warnings but don't terminate
 
     # All steps starting now SHOULD NOT fail!
-    # TODO: run ANF
+    compy.anf.anf(funcs)
+    debug('ANF AST', lambda: pprint(top))
     compy.stack.allocate_stack(funcs)
-    debug('Post stack processing', lambda: pprint(funcs))
+    debug('Post stack processing', lambda: pprint(top))
     lines = compy.codegen.compile_prog(funcs)
     compy.asm.build(info, lines)
     oprint('Build successful!')

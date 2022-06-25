@@ -4,14 +4,12 @@ import sys
 from typing import Sequence, TextIO
 
 import compy.common
+import compy.syntax
 import compy.pipeline
 
 SUFFIX = '.compy'
 
-debug_ast_children = False
-
 def main(args: Sequence[str] | None = None, stdout: TextIO = sys.stdout, stderr: TextIO = sys.stderr):
-    global debug_ast_children
     # print('Argv: ', sys.argv)
     # print('Main: ', args)
     parser = argparse.ArgumentParser(prog=__name__,
@@ -30,7 +28,8 @@ def main(args: Sequence[str] | None = None, stdout: TextIO = sys.stdout, stderr:
     d_pipeline: bool = options.debug_pipeline
     d_asm: bool = options.debug_asm
     d_obj: bool = options.debug_obj
-    debug_ast_children = options.debug_children
+    d_children: bool = options.debug_children
+    compy.syntax.debug_ast_children = d_children
     run: bool = options.run
     out_path: str | None = options.output
 

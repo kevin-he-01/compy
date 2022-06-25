@@ -4,7 +4,6 @@ import sys
 from typing import (Annotated, Any, Generic, Iterable, TypeAlias, TypeVar, get_args,
                     get_origin, get_type_hints)
 
-import compy
 import compy.common
 
 ID: TypeAlias = 'compy.common.ID'
@@ -52,61 +51,24 @@ INFO_ID = VarInfo
 
 @dataclass
 class ScopeInformation:
-    funcs: list[FuncInfo]
+    funcs: list[FuncInfo] = field(default_factory=list)
 
 ## Abstract AST types
 
 @dataclass
 class Node: # Base class of everythingd
-    def child_fields(self) -> Iterable[str]:
-        return child_fields(type(self))
+    def child_fields(self) -> Iterable['Field']:
+        for fld_name, fld_type, imm in child_fields(type(self)):
+            yield Field(obj=self, attr_name=fld_name, ty=fld_type, need_imm=imm)
     def children(self) -> Iterable['Node']:
         for fld in self.child_fields():
-            val: Iterable[Node] | Node = getattr(self, fld)
+            val = fld.get()
             match val:
                 case Node():
                     yield val
                 case _:
                     yield from val
 
-FIELDS_CACHE: dict[type[Node], list[str]] = dict()
-
-_TAB = ' ' * 4
-
-# Return cached results
-def child_fields(clz: type[Node]) -> Iterable[str]:
-    if clz not in FIELDS_CACHE:
-        FIELDS_CACHE[clz] = list(_child_fields(clz))
-        if compy.debug_ast_children: # pragma: no cover
-            flds = FIELDS_CACHE[clz]
-            print(f'class {clz.__name__}: # Children list\n{_TAB}' +
-                (f'\n{_TAB}'.join(flds) if flds else 'pass # [Leaf]'), file=sys.stderr)
-    return FIELDS_CACHE[clz]
-
-# Uncached version
-def _child_fields(clz: type[Node]) -> Iterable[str]:
-    # Note: the order of declaring fields inside class is significant
-    # when determining traversal order (consequently evaluation order in ANF)
-    def report_unknown_type(field_name: str, ty: Any, extra_msg: str = ''):
-        if compy.debug_ast_children: # pragma: no cover
-            print(f'WARNING: Unknown type annotation on {clz.__name__}.{field_name}: {repr(ty)}{extra_msg}')
-    types = get_type_hints(clz)
-    for field in fields(clz):
-        name = field.name
-        ty = types[name]
-        match ty:
-            case type():
-                if get_origin(ty) == list:
-                    (inner_type,) = get_args(ty)
-                    if not isinstance(inner_type, type):
-                        report_unknown_type(name, inner_type, extra_msg=' (Inside list[...])')
-                        continue
-                    ty = inner_type
-                if issubclass(ty, Node):
-                    yield name
-            case _:
-                report_unknown_type(name, ty)
-                pass
 
 @dataclass
 class Statement(Node):
@@ -122,7 +84,87 @@ class EvalExpr(Statement): # Evaluate an expression for its side effects only, i
 
 IMM_EXPR = Annotated[Expression, NeedImmediate()]
 
-## A scope can contain a list of statements
+## AST Children detection
+
+@dataclass
+class Field:
+    obj: Node
+    attr_name: str
+    ty: type
+    need_imm: bool
+
+    def get(self) -> Iterable[Node] | Node:
+        return getattr(self.obj, self.attr_name)
+
+    # def get_as_expr(self) -> Iterable[Expression] | Expression:
+    #     assert self.need_imm
+    #     return getattr(self.obj, self.attr_name)
+    
+    def set(self, value: Iterable[Node] | Node):
+        match value:
+            case Node():
+                assert get_origin(self.ty) != list, 'Setting non-list to list field'
+                assert isinstance(value, self.ty), 'Type mismatch on singular item assignment'
+                setattr(self.obj, self.attr_name, value)
+            case _:
+                assert get_origin(self.ty) == list, 'Setting list to non-list field'
+                (inner_type,) = get_args(self.ty)
+                vals: list[Any] = []
+                for val in value:
+                    assert isinstance(val, inner_type), 'Type mismatch on plural item assignment'
+                    vals.append(val)
+                setattr(self.obj, self.attr_name, vals)
+
+CLASS_FIELD = tuple[str, type, bool]
+
+FIELDS_CACHE: dict[type[Node], list[CLASS_FIELD]] = dict()
+
+_TAB = ' ' * 4
+
+debug_ast_children: bool = False
+
+# Return cached results
+def child_fields(clz: type[Node]) -> Iterable[CLASS_FIELD]:
+    if clz not in FIELDS_CACHE:
+        FIELDS_CACHE[clz] = list(_child_fields(clz))
+        if debug_ast_children: # pragma: no cover
+            flds = FIELDS_CACHE[clz]
+            print(f'class {clz.__name__}: # Children list\n{_TAB}' +
+                (f'\n{_TAB}'.join(f'{name}: {repr(ty)}{" # Immediate" * imm}' for name, ty, imm in flds) if flds else 'pass # [Leaf]'), file=sys.stderr)
+    return FIELDS_CACHE[clz]
+
+# Uncached version
+def _child_fields(clz: type[Node]) -> Iterable[CLASS_FIELD]:
+    # Note: the order of declaring fields inside class is significant
+    # when determining traversal order (consequently evaluation order in ANF)
+    def report_unknown_type(field_name: str, ty: Any, extra_msg: str = ''):
+        if debug_ast_children: # pragma: no cover
+            print(f'WARNING: Unknown type annotation on {clz.__name__}.{field_name}: {repr(ty)}{extra_msg}')
+    types = get_type_hints(clz)
+    types_annot = get_type_hints(clz, include_extras=True)
+    for field in fields(clz):
+        name = field.name
+        ty = types[name]
+        full_type = types_annot[name]
+        match ty:
+            case type():
+                current_ty = ty
+                if get_origin(ty) == list:
+                    (inner_type,) = get_args(ty)
+                    if not isinstance(inner_type, type):
+                        report_unknown_type(name, inner_type, extra_msg=' (Inside list[...])')
+                        continue
+                    current_ty = inner_type
+                if issubclass(current_ty, Node):
+                    imm = bool(get_origin(full_type) == Annotated) and NeedImmediate() in get_args(full_type)
+                    if imm:
+                        assert issubclass(current_ty, Expression), 'Cannot make immediate a non-expression'
+                    yield name, ty, imm
+            case _:
+                report_unknown_type(name, ty)
+                pass
+
+## A scope contains a list of statements
 
 @dataclass
 class Scope(Node):
@@ -193,8 +235,8 @@ class Prim1(Expression):
 class ExprScope(Expression):
     scope: Scope
 
-def mk_exprscope(span: 'compy.common.SourceSpan', ss: list[Statement], expr: Expression):
-    return ExprScope(span=span, scope=Scope(ss + [EvalExpr(span=expr.span, expr=expr)]))
+def mk_exprscope(span: 'compy.common.SourceSpan', ss: list[Statement], expr: Expression, info: ScopeInformation | None = None) -> ExprScope:
+    return ExprScope(span=span, scope=Scope(ss + [EvalExpr(span=expr.span, expr=expr)], info=info))
 
 # TODO: add function expr AST node that generates a unique ID upon instantiation
 # TODO: add class that encloses Scope inside Expression to allow ANF-transforms/let-bindings
