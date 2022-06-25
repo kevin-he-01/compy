@@ -1,4 +1,6 @@
 {
     "exclude": ["**/*.compy"],
-    "ignore": ["**/*.compy"]
+    "ignore": ["**/*.compy"],
+    "reportImportCycles": "none",
+    "reportUnusedImport": "warning"
 }
