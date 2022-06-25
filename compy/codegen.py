@@ -1,9 +1,10 @@
-from compy.asm import (AsmLine, Const, Label, Reg, Symbol, add, call, extern,
-                       global_, mov, pop, push, ret, sub)
+from compy.anf import IMM
+from compy.asm import (AsmLine, Const, Label, Operand, Reg, Symbol, WordSize, add, call, extern,
+                       global_, lea, mov, pop, push, ret, sub)
 from compy.common import (MAIN, CompiledFunction, PrimType, SourceSpan, concat,
                           unwrap)
 from compy.stack import op_stack
-from compy.syntax import (Assignment, Binding, EvalExpr, ExprScope, Expression, GetType, Integer,
+from compy.syntax import (IMM_EXPR, Assignment, Binding, EvalExpr, ExprScope, Expression, GetType, Integer,
                           Name, NewScope, NoOp, Prim1, Scope, Statement,
                           TypeLiteral, UnaryOp, Unit, VarInfo)
 
@@ -16,10 +17,10 @@ RTYPE = Reg.RDX
 RPARAMS = [Reg.RDI, Reg.RSI, Reg.RDX, Reg.RCX, Reg.R8, Reg.R9]
 
 # External functions
-PRINT_ = 'print_'
-NEGATE_ = 'negate_'
-ADD1_ = 'add1_'
-SUB1_ = 'sub1_'
+PRINT = 'print'
+NEGATE = 'negate'
+ADD1 = 'add1'
+SUB1 = 'sub1'
 
 def op_type(ty: PrimType):
     return Const(ty.code())
@@ -42,20 +43,32 @@ def load_none() -> CODE:
 def sym_op(op: UnaryOp) -> Symbol:
     match op:
         case UnaryOp.NEGATE:
-            return Symbol(NEGATE_)
+            return Symbol(NEGATE)
         case UnaryOp.PRINT:
-            return Symbol(PRINT_)
+            return Symbol(PRINT)
         case UnaryOp.ADD1:
-            return Symbol(ADD1_)
+            return Symbol(ADD1)
         case UnaryOp.SUB1:
-            return Symbol(SUB1_)
+            return Symbol(SUB1)
+
+def get_var_offset(name: Name) -> int:
+    # TODO: when implementing closures, use effective offset from this call frame's stack
+    return unwrap(name.info).get_stack_offset()
+
+def _imm_op(imm: IMM) -> Operand:
+    match imm:
+        case Name():
+            return op_stack(get_var_offset(imm), size=WordSize.NONE)
+
+def imm_op(imm: IMM_EXPR) -> Operand:
+    assert isinstance(imm, IMM), 'Expected an immediate'
+    return _imm_op(imm)
 
 # Compile into return registers
 def compile_expr(ex: Expression) -> CODE:
     match ex:
-        case Name(info=info):
-            # TODO: when implementing closures, use effective offset from this call frame's stack
-            return read_var_at(unwrap(info).get_stack_offset())
+        case Name():
+            return read_var_at(get_var_offset(ex))
         case Integer(value=value):
             return [ mov(RVAL, Const(value)), mov(RTYPE, op_type(PrimType.INT)) ]
         case TypeLiteral(ty=ty):
@@ -63,8 +76,7 @@ def compile_expr(ex: Expression) -> CODE:
         case GetType(ex=ex):
             return compile_expr(ex) + [ mov(RVAL, RTYPE), mov(RTYPE, op_type(PrimType.TYPE)) ]
         case Prim1(op=op, ex1=inside, span=SourceSpan(lineno=lineno)):
-            return compile_expr(inside) + \
-                [ mov(RPARAMS[0], Const(lineno)), mov(RPARAMS[1], RVAL), mov(RPARAMS[2], RTYPE), call(sym_op(op)) ]
+            return [ mov(RPARAMS[0], Const(lineno)), lea(RPARAMS[1], imm_op(inside)), call(sym_op(op)) ]
         case Unit():
             return load_none()
         case ExprScope(scope=scope):
@@ -111,10 +123,10 @@ def compile_func(func: CompiledFunction) -> CODE:
 def compile_prog(funcs: list[CompiledFunction]) -> CODE:
     lines: CODE = [
         global_(MAIN),
-        extern(PRINT_),
-        extern(NEGATE_),
-        extern(ADD1_),
-        extern(SUB1_),
+        extern(PRINT),
+        extern(NEGATE),
+        extern(ADD1),
+        extern(SUB1),
     ]
     for func in funcs:
         lines.extend(compile_func(func))

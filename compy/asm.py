@@ -30,10 +30,11 @@ class Reg(Operand, Enum):
         return self.value
 
 class WordSize(Enum):
-    BYTE = 'byte'
-    WORD = 'word'
-    DWORD = 'dword'
-    QWORD = 'qword'
+    BYTE = 'byte '
+    WORD = 'word '
+    DWORD = 'dword '
+    QWORD = 'qword '
+    NONE = ''
 
     def notation(self) -> str:
         return self.value
@@ -50,7 +51,7 @@ class MemOperand(Operand):
     def address(self) -> str:
         raise NotImplementedError
     def assemble(self) -> str:
-        return self.size.notation() + ' [' + self.address() + ']'
+        return self.size.notation() + '[' + self.address() + ']'
 
 @dataclass
 class Symbol(Operand):
@@ -111,6 +112,9 @@ def extern(sym: str):
 
 def mov(dst: Operand, src: Operand):
     return Instruction('mov', [dst, src])
+
+def lea(dst: Operand, src: Operand):
+    return Instruction('lea', [dst, src])
 
 def add(op1: Operand, op2: Operand):
     return Instruction('add', [op1, op2])

@@ -1,6 +1,8 @@
 #! /bin/bash
 
-cd "$(dirname -- "${BASH_SOURCE[0]}")/.." || exit
+set -e
+
+cd "$(dirname -- "${BASH_SOURCE[0]}")/.."
 
 if (( $# > 1 )); then
     echo "usage: tests [tests.path.to.test_something[.TestClass]]" >&2

@@ -5,9 +5,11 @@
 #include "panic.h"
 
 // Support code that passes argument via registers (instead of pointers)
+/*
 #define REGPASS_PRIM1(name) obj_t name##_(location_t debug_info, obj_t o) { \
                                 return name(debug_info, &o); \
                             }
+*/
 
 static void print_val(arg_t o) {
     // Print value without newlines
@@ -60,8 +62,3 @@ obj_t sub1(location_t debug_info, arg_t x) {
     }
     return INT_VAL(value - 1);
 }
-
-REGPASS_PRIM1(print)
-REGPASS_PRIM1(negate)
-REGPASS_PRIM1(add1)
-REGPASS_PRIM1(sub1)

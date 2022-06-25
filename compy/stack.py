@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from compy.asm import MemRegOffset, Reg
+from compy.asm import MemRegOffset, Reg, WordSize
 from compy.common import CompiledFunction
 
 from compy.syntax import Binding, Node, NodeWalker, Scope
@@ -59,5 +59,5 @@ def allocate_stack(funcs: list[CompiledFunction]):
         func.stack_usage = alloc.space
 
 # Return a memory operand that can be used to access the stack variable at `stack_pos` at offset `offset`
-def op_stack(stack_pos: int, offset: int = 0):
-    return MemRegOffset(Reg.RBP, stack_pos + offset)
+def op_stack(stack_pos: int, offset: int = 0, *, size: WordSize = WordSize.QWORD):
+    return MemRegOffset(Reg.RBP, stack_pos + offset, size=size)
