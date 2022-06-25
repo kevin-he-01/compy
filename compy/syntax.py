@@ -1,12 +1,21 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from enum import Enum, auto
-from typing import Generic, Iterable, TypeAlias, TypeVar
+import sys
+from typing import (Annotated, Any, Generic, Iterable, TypeAlias, TypeVar, get_args,
+                    get_origin, get_type_hints)
 
+import compy
 import compy.common
 
 ID: TypeAlias = 'compy.common.ID'
 
-# Tag information
+## Type annotations
+
+@dataclass
+class NeedImmediate: # Indicate a field need to be converted to an immediate during ANF phase
+    pass
+
+## Tag information
 
 next_var_id = 0
 
@@ -45,17 +54,59 @@ INFO_ID = VarInfo
 class ScopeInformation:
     funcs: list[FuncInfo]
 
-# Abstract AST types
+## Abstract AST types
 
 @dataclass
-class Node: # Base class of everything
+class Node: # Base class of everythingd
+    def child_fields(self) -> Iterable[str]:
+        return child_fields(type(self))
     def children(self) -> Iterable['Node']:
-        raise NotImplementedError
+        for fld in self.child_fields():
+            val: Iterable[Node] | Node = getattr(self, fld)
+            match val:
+                case Node():
+                    yield val
+                case _:
+                    yield from val
 
-@dataclass
-class Leaf(Node):
-    def children(self) -> Iterable['Node']:
-        return []
+FIELDS_CACHE: dict[type[Node], list[str]] = dict()
+
+_TAB = ' ' * 4
+
+# Return cached results
+def child_fields(clz: type[Node]) -> Iterable[str]:
+    if clz not in FIELDS_CACHE:
+        FIELDS_CACHE[clz] = list(_child_fields(clz))
+        if compy.debug_ast_children: # pragma: no cover
+            flds = FIELDS_CACHE[clz]
+            print(f'class {clz.__name__}: # Children list\n{_TAB}' +
+                (f'\n{_TAB}'.join(flds) if flds else 'pass # [Leaf]'), file=sys.stderr)
+    return FIELDS_CACHE[clz]
+
+# Uncached version
+def _child_fields(clz: type[Node]) -> Iterable[str]:
+    # Note: the order of declaring fields inside class is significant
+    # when determining traversal order (consequently evaluation order in ANF)
+    def report_unknown_type(field_name: str, ty: Any, extra_msg: str = ''):
+        if compy.debug_ast_children: # pragma: no cover
+            print(f'WARNING: Unknown type annotation on {clz.__name__}.{field_name}: {repr(ty)}{extra_msg}')
+    types = get_type_hints(clz)
+    for field in fields(clz):
+        name = field.name
+        ty = types[name]
+        match ty:
+            case type():
+                if get_origin(ty) == list:
+                    (inner_type,) = get_args(ty)
+                    if not isinstance(inner_type, type):
+                        report_unknown_type(name, inner_type, extra_msg=' (Inside list[...])')
+                        continue
+                    ty = inner_type
+                if issubclass(ty, Node):
+                    yield name
+            case _:
+                report_unknown_type(name, ty)
+                pass
 
 @dataclass
 class Statement(Node):
@@ -68,19 +119,17 @@ class Expression(Node):
 @dataclass
 class EvalExpr(Statement): # Evaluate an expression for its side effects only, ignoring its value
     expr: Expression
-    def children(self) -> Iterable['Node']:
-        return [self.expr]
 
-# A scope can contain a list of statements
+IMM_EXPR = Annotated[Expression, NeedImmediate()]
+
+## A scope can contain a list of statements
 
 @dataclass
 class Scope(Node):
     statements: list[Statement]
     info: ScopeInformation | None = None
-    def children(self) -> Iterable['Node']:
-        return self.statements
 
-# Begin concrete AST statements
+## Begin concrete AST statements
 
 @dataclass
 class Binding(Statement):
@@ -88,8 +137,6 @@ class Binding(Statement):
     name: ID
     init_val: Expression
     info: VarInfo | None = None
-    def children(self) -> Iterable['Node']:
-        return [self.init_val]
 
 @dataclass
 class Assignment(Statement):
@@ -97,46 +144,39 @@ class Assignment(Statement):
     src: Expression
     target_span: 'compy.common.SourceSpan'
     info: INFO_ID | None = None
-    def children(self) -> Iterable['Node']:
-        return [self.src]
 
 @dataclass
-class NoOp(Leaf,Statement):
+class NoOp(Statement):
     pass
 
 @dataclass
 class NewScope(Statement):
     body: Scope
-    def children(self) -> Iterable['Node']:
-        return [self.body]
 
-# Begin concrete AST expressions
+## Begin concrete AST expressions
 
 @dataclass
-class Name(Leaf,Expression):
+class Name(Expression):
     name: ID
     info: INFO_ID | None = None
     # TODO: add additional information on how to access this variable
     # Stack offset in the CURRENT function (can be different from info.stack_offset when it is a closure free variable)
 
 @dataclass
-class Integer(Leaf,Expression):
+class Integer(Expression):
     value: int
 
 @dataclass
-class TypeLiteral(Leaf,Expression):
+class TypeLiteral(Expression):
     ty: 'compy.common.PrimType'
 
 @dataclass
-class Unit(Leaf,Expression):
-    # The only instance of 'None'
+class Unit(Expression): # The only instance of 'None'
     pass
 
 @dataclass
 class GetType(Expression): # Could be a Prim1, but do not need ex to be immediate for ANF
     ex: Expression
-    def children(self) -> Iterable['Node']:
-        return [self.ex]
 
 class UnaryOp(Enum):
     NEGATE = auto()
@@ -147,15 +187,11 @@ class UnaryOp(Enum):
 @dataclass
 class Prim1(Expression):
     op: UnaryOp
-    ex1: Expression
-    def children(self) -> list['Expression']:
-        return [self.ex1]
+    ex1: IMM_EXPR
 
 @dataclass
 class ExprScope(Expression):
     scope: Scope
-    def children(self) -> Iterable['Node']:
-        return [self.scope]
 
 def mk_exprscope(span: 'compy.common.SourceSpan', ss: list[Statement], expr: Expression):
     return ExprScope(span=span, scope=Scope(ss + [EvalExpr(span=expr.span, expr=expr)]))
@@ -172,3 +208,6 @@ class NodeWalker(Generic[C]):
     def walk(self, node: Node, ctx: C):
         for child in node.children():
             self.walk(child, ctx)
+
+## Users should import ID from common, not syntax since this is a foward reference
+del ID

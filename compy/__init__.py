@@ -8,7 +8,10 @@ import compy.pipeline
 
 SUFFIX = '.compy'
 
+debug_ast_children = False
+
 def main(args: Sequence[str] | None = None, stdout: TextIO = sys.stdout, stderr: TextIO = sys.stderr):
+    global debug_ast_children
     # print('Argv: ', sys.argv)
     # print('Main: ', args)
     parser = argparse.ArgumentParser(prog=__name__,
@@ -17,6 +20,7 @@ def main(args: Sequence[str] | None = None, stdout: TextIO = sys.stdout, stderr:
     parser.add_argument('--debug-pipeline', action='store_true')
     parser.add_argument('--debug-asm', action='store_true')
     parser.add_argument('--debug-obj', action='store_true')
+    parser.add_argument('--debug-children', action='store_true', help='Debugging AST Node children calculation')
     parser.add_argument('-r', '--run', action='store_true', help='If present, also runs the compiled executable (with no arguments) after compilation. ' +
                                                                  'Do not use this option if calling main() from another program since it uses exec()')
     parser.add_argument('-o', '--output', help='The path to the output executable')
@@ -26,6 +30,7 @@ def main(args: Sequence[str] | None = None, stdout: TextIO = sys.stdout, stderr:
     d_pipeline: bool = options.debug_pipeline
     d_asm: bool = options.debug_asm
     d_obj: bool = options.debug_obj
+    debug_ast_children = options.debug_children
     run: bool = options.run
     out_path: str | None = options.output
 
