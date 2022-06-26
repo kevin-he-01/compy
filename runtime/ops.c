@@ -50,7 +50,7 @@ obj_t op_name(location_t debug_info, arg_t left, arg_t right) { \
         panic(debug_info, ARITH_OVERFLOW, "Overflow on " #op_sym); \
     } \
     return INT_VAL(lv op_sym rv); \
-} \
+}
 
 static void print_val(arg_t o) {
     // Print value without newlines
@@ -64,18 +64,28 @@ static void print_val(arg_t o) {
     case TYPE_TYPE:
         printf("%s", to_typename(o->val.type));
         break;
+    case TYPE_BOOL:
+        printf(o->val.un_int ? "True" : "False");
+        break;
     
     default:
         assertm(0, "print_val: Invalid type code");
     }
 }
 
-// Runtime exports
+/////////////////////
+// Runtime exports //
+/////////////////////
+
+// Misc
+
 obj_t print(UNUSED location_t debug_info, arg_t o) {
     print_val(o);
     putchar('\n');
     return NONE_VAL;
 }
+
+// Arithmetic
 
 obj_t negate(location_t debug_info, arg_t x) {
     assert_type(debug_info, "negate (-)", x, TYPE_INT);
@@ -100,3 +110,61 @@ obj_t sub1(location_t debug_info, arg_t x) {
 
 DIV_MOD_OP(div, /)
 DIV_MOD_OP(mod, %)
+
+// Boolean
+
+unsigned long extract_bool(location_t debug_info, arg_t b) {
+    // TODO: accept strings other than "if statement", like "if expression" via an argument
+    assert_type(debug_info, "if statement", b, TYPE_BOOL);
+    return b->val.un_int;
+}
+
+obj_t boolean_not(location_t debug_info, arg_t b) {
+    assert_type(debug_info, "not", b, TYPE_BOOL); 
+    return BOOL_VAL(!(b->val.un_int));
+}
+
+obj_t boolean_and(location_t debug_info, arg_t b1, arg_t b2) {
+    assert_type(debug_info, "and", b1, TYPE_BOOL); 
+    assert_type(debug_info, "and", b2, TYPE_BOOL); 
+    return BOOL_VAL((b1->val.un_int) && (b2->val.un_int));
+}
+
+obj_t boolean_or(location_t debug_info, arg_t b1, arg_t b2) {
+    assert_type(debug_info, "or", b1, TYPE_BOOL); 
+    assert_type(debug_info, "or", b2, TYPE_BOOL); 
+    return BOOL_VAL((b1->val.un_int) || (b2->val.un_int));
+}
+
+// Comparison
+
+obj_t is_identical(UNUSED location_t debug_info, arg_t a, arg_t b) {
+    // Reinterpret everything as `unsigned long` to compare underlying representation
+    return BOOL_VAL((a->type == b->type) && (a->val.un_int == b->val.un_int));
+}
+
+obj_t is_eq(location_t debug_info, arg_t a, arg_t b) {
+    // TODO: For now, assume everything is equal IFF the representation is equal
+    // Representation must be canonicalized (None MUST have 0 as value field)
+    // Will not be the case for floating point (0.0 and -0.0)
+    return is_identical(debug_info, a, b);
+}
+
+#define CMP_OP(func_name, operator) \
+obj_t func_name(location_t debug_info, arg_t a, arg_t b) { \
+    assert_type(debug_info, #operator, a, TYPE_INT);  \
+    assert_type(debug_info, #operator, b, TYPE_INT); \
+    return BOOL_VAL(a->val.si_int operator b->val.si_int); \
+}
+
+// Sample:
+// obj_t is_le(location_t debug_info, arg_t a, arg_t b) {
+//     assert_type(debug_info, "<", a, TYPE_INT); 
+//     assert_type(debug_info, "<", b, TYPE_INT);
+//     return BOOL_VAL(a->val.si_int < b->val.si_int);
+// }
+
+CMP_OP(is_lt, <)
+CMP_OP(is_gt, >)
+CMP_OP(is_le, <=)
+CMP_OP(is_ge, >=)

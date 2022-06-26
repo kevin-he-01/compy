@@ -8,6 +8,8 @@ const char *to_typename(type_t type) {
         return "NoneType";
     case TYPE_TYPE:
         return "type";
+    case TYPE_BOOL:
+        return "bool";
     
     default:
         assertm(0, "to_typename: Invalid type code");

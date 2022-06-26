@@ -1,10 +1,11 @@
+from dataclasses import dataclass
 from compy.anf import IMM
-from compy.asm import (AsmLine, Const, Label, Operand, Reg, Symbol, WordSize, add, call, extern,
-                       global_, lea, mov, pop, push, ret, sub)
+from compy.asm import (AsmLine, Const, Label, Operand, Reg, Symbol, WordSize, add, call, cmp, extern,
+                       global_, je, lea, mov, pop, push, ret, sub, jmp)
 from compy.common import (MAIN, CompiledFunction, PrimType, SourceSpan, concat,
                           unwrap)
 from compy.stack import op_stack
-from compy.syntax import (IMM_EXPR, Assignment, BinOp, Binding, EvalExpr, ExprScope, Expression, GetType, Integer,
+from compy.syntax import (IMM_EXPR, Assignment, BinOp, Binding, Boolean, EvalExpr, ExprScope, Expression, GetType, IfStmt, Integer,
                           Name, NewScope, NoOp, Prim1, Prim2, Scope, Statement,
                           TypeLiteral, UnaryOp, Unit, VarInfo)
 
@@ -15,6 +16,17 @@ RTYPE = Reg.RDX
 
 # Registers used to pass arguments on the calling convention
 RPARAMS = [Reg.RDI, Reg.RSI, Reg.RDX, Reg.RCX, Reg.R8, Reg.R9]
+
+# Symbols
+EXTRACT_BOOL = 'extract_bool'
+
+@dataclass
+class CodegenState:
+    label_num: int = 0
+
+    def new_label(self) -> str:
+        self.label_num += 1
+        return f'_compy_label_{self.label_num}'
 
 def op_type(ty: PrimType):
     return Const(ty.code())
@@ -60,6 +72,8 @@ def compile_expr(ex: Expression) -> CODE:
             return read_var_at(get_var_offset(ex))
         case Integer(value=value):
             return [ mov(RVAL, Const(value)), mov(RTYPE, op_type(PrimType.INT)) ]
+        case Boolean(value=value):
+            return [ mov(RVAL, Const(int(value))), mov(RTYPE, op_type(PrimType.BOOL)) ]
         case TypeLiteral(ty=ty):
             return [ mov(RVAL, op_type(ty)), mov(RTYPE, op_type(PrimType.TYPE)) ]
         case GetType(ex=ex):
@@ -80,6 +94,23 @@ def compile_expr(ex: Expression) -> CODE:
         case _: # pragma: no cover
             assert False, f'Unhandled expression: {type(ex)}'
 
+def compile_if(stmt: IfStmt) -> CODE:
+    label_false = _state.new_label()
+    label_end = _state.new_label()
+    op = imm_op(stmt.test)
+    return [
+        mov(RPARAMS[0], Const(stmt.span.lineno)),
+        lea(RPARAMS[1], op),
+        call(Symbol(EXTRACT_BOOL)),
+        cmp(RVAL, Const(0)),
+        je(Symbol(label_false)),
+        *compile_scope(stmt.body),
+        jmp(Symbol(label_end)),
+        Label(label_false),
+        *compile_scope(stmt.orelse),
+        Label(label_end)
+    ]
+
 # TODO: accept return label as second arg for compile_scope and compile_statement
 def compile_statement(st: Statement) -> CODE:
     match st:
@@ -93,6 +124,9 @@ def compile_statement(st: Statement) -> CODE:
             return []
         case NewScope(body=scope):
             return compile_scope(scope)
+        # case IfStmt(test=test, body=body, orelse=orelse):
+        case IfStmt():
+            return compile_if(st)
         case _: # pragma: no cover
             assert False, f'Unhandled statement: {type(st)}'
 
@@ -117,10 +151,13 @@ def compile_func(func: CompiledFunction) -> CODE:
     ]
 
 def compile_prog(funcs: list[CompiledFunction]) -> CODE:
+    global _state
+    _state = CodegenState()
     lines: CODE = [
         global_(MAIN),
-        *[extern(op.symbol()) for op in UnaryOp],
-        *[extern(op.symbol()) for op in BinOp],
+        *(extern(op.symbol()) for op in UnaryOp),
+        *(extern(op.symbol()) for op in BinOp),
+        extern(EXTRACT_BOOL)
     ]
     for func in funcs:
         lines.extend(compile_func(func))

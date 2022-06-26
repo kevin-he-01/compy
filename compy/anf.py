@@ -33,7 +33,7 @@ def anf(funcs: list[CompiledFunction]):
                         return mk_exprscope(node.span, bindings, node, info=ScopeInformation())
                     case Statement():
                         return NewScope(span=node.span, body=Scope(bindings + [node], info=ScopeInformation()))
-                    case _:
+                    case _: # pragma: no cover
                         assert False, 'Cannot ANF something that is neither an expression or statement'
             return node
         visit(func.body)

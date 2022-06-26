@@ -71,15 +71,26 @@ and
 https://wiki.sei.cmu.edu/confluence/display/c/INT32-C.+Ensure+that+operations+on+signed+integers+do+not+result+in+overflow#:~:text=service%20attack.-,Compliant%20Solution,-This%20compliant%20solution
 to check for div by zero/overflow on division (only one case in signed numbers LONG_MIN / (-1) allows overflow)
 
-## Planned types
+# Agenda
 
+## (deferred) more integer types:
 2^32 * n: Integer types
     int
     uint
     wrapping versions of those
-1: NoneType
-2: type (holding a value itself representing a primitive type)
 
-Support calling "library functions" that are variadic:
+## Introduce constant string literals (without string processing capabilities like concatenation or character indexing for now)
+
+Allow input() to have a readable prompt and print() things like hello world
+
+## Support calling "library functions" that are variadic:
 print(): accept any number of args
 input(): 0 or 1, depending on whether there is a prompt
+## Keyword arguments (with default values) implemented via separate function: print_sep_flush(str, bool, ...):
+print(..., sep=<string>, flush=<boolean>)
+
+## (low priority) Support compiler directives/pragmas
+Ex. Making things more like Python
+- division/mod rounds toward negative (instead of zero)
+- input() behaves like Python 3 vs Python 2 (eval(input()))
+- Make bool a subclass of int (and accept int in boolean context)

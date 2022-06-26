@@ -40,6 +40,22 @@ class TestBoa(common.CompyTestCase):
     def test_mod0(self):
         self.success_case('mod0', b'68392\n')
 
+class TestBoaBool(common.CompyTestCase):
+    def prefix(self) -> list[str]:
+        return [BOA, 'bool']
+    
+    def test_bool(self):
+        self.success_case('bool', b'True\nFalse\n')
+
+    def test_bool_neg(self):
+        self.success_case('bool-neg', b'False\nTrue\n')
+    
+    def test_comparison(self):
+        self.success_case('comparison', OUTPUT_COMPARISON)
+
+    def test_if0(self):
+        self.success_case('if0', b'1\n10\n')
+
 class TestLet(common.CompyTestCase):
     def prefix(self) -> list[str]:
         return [BOA, 'let']
@@ -55,3 +71,34 @@ class TestLet(common.CompyTestCase):
     
     def test_nested(self):
         self.success_case('nested', b'9\nNone\n10\n7\n')
+
+OUTPUT_COMPARISON = b'''None
+False
+True
+False
+True
+False
+True
+None
+True
+False
+False
+12
+True
+True
+False
+False
+False
+22
+False
+True
+True
+True
+False
+32
+False
+False
+False
+True
+True
+'''

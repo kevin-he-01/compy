@@ -116,11 +116,20 @@ def mov(dst: Operand, src: Operand):
 def lea(dst: Operand, src: Operand):
     return Instruction('lea', [dst, src])
 
+def cmp(dst: Operand, src: Operand):
+    return Instruction('cmp', [dst, src])
+
 def add(op1: Operand, op2: Operand):
     return Instruction('add', [op1, op2])
 
 def sub(op1: Operand, op2: Operand):
     return Instruction('sub', [op1, op2])
+
+def je(dst: Operand):
+    return Instruction('je', [dst])
+
+def jmp(dst: Operand):
+    return Instruction('jmp', [dst])
 
 def neg(op: Operand):
     return Instruction('neg', [op])

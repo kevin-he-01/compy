@@ -47,10 +47,13 @@ class CompiledFunction:
     stack_usage: int | None = None
     # id should originate from the function declaration node in the AST
 
+# TODO: make keyword lookup automatic by encoding both string and type code here
+# Instead of using keywords.py
 class PrimType(Enum):
     INT = 0
     NONE = 1
     TYPE = 2
+    BOOL = 3
 
     def code(self) -> int:
         return self.value

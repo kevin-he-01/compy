@@ -151,7 +151,7 @@ def _child_fields(clz: type[Node]) -> Iterable[CLASS_FIELD]:
                 current_ty = ty
                 if get_origin(ty) == list:
                     (inner_type,) = get_args(ty)
-                    if not isinstance(inner_type, type):
+                    if not isinstance(inner_type, type): # pragma: no cover
                         report_unknown_type(name, inner_type, extra_msg=' (Inside list[...])')
                         continue
                     current_ty = inner_type
@@ -195,6 +195,12 @@ class NoOp(Statement):
 class NewScope(Statement):
     body: Scope
 
+@dataclass
+class IfStmt(Statement):
+    test: IMM_EXPR
+    body: Scope
+    orelse: Scope
+
 ## Begin concrete AST expressions
 
 @dataclass
@@ -207,6 +213,10 @@ class Name(Expression):
 @dataclass
 class Integer(Expression):
     value: int
+
+@dataclass
+class Boolean(Expression):
+    value: bool
 
 @dataclass
 class TypeLiteral(Expression):
@@ -225,6 +235,7 @@ class UnaryOp(Enum):
     PRINT = 'print' # For now, will make it a function later
     ADD1 = 'add1'
     SUB1 = 'sub1'
+    NOT = 'boolean_not'
 
     # Runtime call symbol
     def symbol(self) -> str:
@@ -236,6 +247,12 @@ class BinOp(Enum):
     MUL = 'mul'
     DIV = 'div'
     MOD = 'mod'
+    IS = 'is_identical'
+    EQ = 'is_eq'
+    LT = 'is_lt'
+    GT = 'is_gt'
+    LE = 'is_le'
+    GE = 'is_ge'
 
     # Runtime call symbol
     def symbol(self) -> str:
