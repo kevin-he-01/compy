@@ -83,6 +83,7 @@ class EvalExpr(Statement): # Evaluate an expression for its side effects only, i
     expr: Expression
 
 IMM_EXPR = Annotated[Expression, NeedImmediate()]
+IMM_EXPRS = Annotated[list[Expression], NeedImmediate()]
 
 ## AST Children detection
 
@@ -232,7 +233,7 @@ class GetType(Expression): # Could be a Prim1, but do not need ex to be immediat
 
 class UnaryOp(Enum):
     NEGATE = 'negate'
-    PRINT = 'print' # For now, will make it a function later
+    # PRINT = 'print' # Removed
     ADD1 = 'add1'
     SUB1 = 'sub1'
     NOT = 'boolean_not'
@@ -268,6 +269,10 @@ class Prim2(Expression):
     op: BinOp
     left: IMM_EXPR
     right: IMM_EXPR
+
+@dataclass
+class Print(Expression):
+    args: IMM_EXPRS
 
 @dataclass
 class ExprScope(Expression):

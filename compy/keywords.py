@@ -16,7 +16,7 @@ PRIM_TYPE_MAP = {'int': PrimType.INT, 'NoneType': PrimType.NONE, 'type': PrimTyp
 
 ALL_KEYWORDS = {VAL, VAR, PRINT, ADD1, SUB1, UNDERSCORE, TYPE, LET, *PRIM_TYPE_MAP.keys()}
 
-KW_UNARY_OPS = {PRINT: UnaryOp.PRINT, ADD1: UnaryOp.ADD1, SUB1: UnaryOp.SUB1}
+KW_UNARY_OPS = {ADD1: UnaryOp.ADD1, SUB1: UnaryOp.SUB1}
 
 def is_keyword(s: str) -> bool:
     return s in ALL_KEYWORDS

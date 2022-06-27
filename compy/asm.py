@@ -113,7 +113,7 @@ def extern(sym: str):
 def mov(dst: Operand, src: Operand):
     return Instruction('mov', [dst, src])
 
-def lea(dst: Operand, src: Operand):
+def lea(dst: Operand, src: MemOperand):
     return Instruction('lea', [dst, src])
 
 def cmp(dst: Operand, src: Operand):

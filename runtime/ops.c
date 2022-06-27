@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <limits.h>
 #include <stdbool.h>
+#include <stdarg.h>
 #include "common.h"
 #include "panic.h"
 
@@ -79,11 +80,26 @@ static void print_val(arg_t o) {
 
 // Misc
 
-obj_t print(UNUSED location_t debug_info, arg_t o) {
-    print_val(o);
-    putchar('\n');
+#define SEP " " // TODO: allow customizing this value later on
+#define END "\n"
+
+obj_t print_variadic(UNUSED location_t debug_info, int nargs, ...) {
+    va_list args;
+    va_start(args, nargs);
+    for (int i = 0; i < nargs; i++) {
+        if (i)
+            printf("%s", SEP);
+        print_val(va_arg(args, arg_t));
+    }
+    va_end(args);
+    printf("%s", END);
     return NONE_VAL;
 }
+
+// Removed
+// obj_t print(location_t debug_info, arg_t o) {
+//     return print_variadic(debug_info, 1, o);
+// }
 
 // Arithmetic
 

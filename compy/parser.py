@@ -95,7 +95,9 @@ def parse_expr(ex: ast.expr) -> syn.Expression:
                     raise CompileError(msg=f"Unknown literal {v}", span=span)
         case ast.Call(func=ast.Name(id=kw.TYPE), args=[ex1], keywords=[]):
             return syn.GetType(span=span, ex=parse_expr(ex1))
-        case ast.Call(func=ast.Name(id=(kw.PRINT | kw.ADD1 | kw.SUB1 as func)), args=[ex1], keywords=[]):
+        case ast.Call(func=ast.Name(id=kw.PRINT), args=exs, keywords=[]):
+            return syn.Print(span=span, args=[parse_expr(ex) for ex in exs])
+        case ast.Call(func=ast.Name(id=(kw.ADD1 | kw.SUB1 as func)), args=[ex1], keywords=[]):
             return syn.Prim1(span=span, op=kw.KW_UNARY_OPS[func], ex1=parse_expr(ex1))
         case ast.Call(func=ast.Name(id=kw.LET), args=[*binds, body], keywords=[]):
             return parse_let(span, binds, body)

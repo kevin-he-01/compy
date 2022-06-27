@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 from compy.anf import IMM
-from compy.asm import (AsmLine, Const, Label, Operand, Reg, Symbol, WordSize, add, call, cmp, extern,
+from compy.asm import (AsmLine, Const, Instruction, Label, MemOperand, Operand, Reg, Symbol, WordSize, add, call, cmp, extern,
                        global_, je, lea, mov, pop, push, ret, sub, jmp)
 from compy.common import (MAIN, CompiledFunction, PrimType, SourceSpan, concat,
                           unwrap)
 from compy.stack import op_stack
-from compy.syntax import (IMM_EXPR, Assignment, BinOp, Binding, Boolean, EvalExpr, ExprScope, Expression, GetType, IfStmt, Integer,
-                          Name, NewScope, NoOp, Prim1, Prim2, Scope, Statement,
+from compy.syntax import (IMM_EXPR, IMM_EXPRS, Assignment, BinOp, Binding, Boolean, EvalExpr, ExprScope, Expression, GetType, IfStmt, Integer,
+                          Name, NewScope, NoOp, Prim1, Prim2, Print, Scope, Statement,
                           TypeLiteral, UnaryOp, Unit, VarInfo)
 
 CODE = list[AsmLine]
@@ -19,6 +19,7 @@ RPARAMS = [Reg.RDI, Reg.RSI, Reg.RDX, Reg.RCX, Reg.R8, Reg.R9]
 
 # Symbols
 EXTRACT_BOOL = 'extract_bool'
+PRINT_VARARGS = 'print_variadic'
 
 @dataclass
 class CodegenState:
@@ -56,14 +57,45 @@ def get_var_offset(name: Name) -> int:
     # TODO: when implementing closures, use effective offset from this call frame's stack
     return unwrap(name.info).get_stack_offset()
 
-def _imm_op(imm: IMM) -> Operand:
+@dataclass
+class AddrOf:
+    mem_op: MemOperand
+
+@dataclass
+class Direct:
+    op: Operand
+
+ARG = Direct | AddrOf
+
+def _imm_op(imm: IMM) -> MemOperand:
     match imm:
         case Name():
             return op_stack(get_var_offset(imm), size=WordSize.NONE)
 
-def imm_op(imm: IMM_EXPR) -> Operand:
+def imm_op(imm: IMM_EXPR) -> MemOperand:
     assert isinstance(imm, IMM), 'Expected an immediate'
     return _imm_op(imm)
+
+def imm2arg(imm: IMM_EXPR) -> ARG:
+    return AddrOf(imm_op(imm))
+
+def imms2args(imms: IMM_EXPRS) -> list[ARG]:
+    return [imm2arg(imm) for imm in imms]
+
+def load_into(reg: Reg, arg: ARG) -> AsmLine:
+    match arg:
+        case Direct(op):
+            return mov(reg, op)
+        case AddrOf(op):
+            return lea(reg, op)
+
+def call_runtime_func(sym_name: str, variadic: bool, args: list[ARG]) -> CODE:
+    assert len(args) <= len(RPARAMS) # TODO: support more than 6 args
+    return [
+        *(load_into(param_reg, arg) for param_reg, arg in zip(RPARAMS, args)),
+        *([ mov(Reg.RAX, Const(0)) ] if variadic else []),
+        call(Symbol(sym_name))
+    ]
 
 # Compile into return registers
 def compile_expr(ex: Expression) -> CODE:
@@ -79,14 +111,11 @@ def compile_expr(ex: Expression) -> CODE:
         case GetType(ex=ex):
             return compile_expr(ex) + [ mov(RVAL, RTYPE), mov(RTYPE, op_type(PrimType.TYPE)) ]
         case Prim1(op=op, ex1=inside, span=SourceSpan(lineno=lineno)):
-            return [ mov(RPARAMS[0], Const(lineno)), lea(RPARAMS[1], imm_op(inside)), call(sym_op(op)) ]
+            return call_runtime_func(op.symbol(), False, [Direct(Const(lineno)), imm2arg(inside)])
         case Prim2(op=op, left=left, right=right, span=SourceSpan(lineno=lineno)):
-            return [
-                mov(RPARAMS[0], Const(lineno)),
-                lea(RPARAMS[1], imm_op(left)),
-                lea(RPARAMS[2], imm_op(right)),
-                call(sym_binop(op))
-            ]
+            return call_runtime_func(op.symbol(), False, [Direct(Const(lineno)), *imms2args([left, right])])
+        case Print(args=args, span=SourceSpan(lineno=lineno)):
+            return call_runtime_func(PRINT_VARARGS, True, [Direct(Const(lineno)), Direct(Const(len(args))), *imms2args(args)])
         case Unit():
             return load_none()
         case ExprScope(scope=scope):
@@ -157,7 +186,8 @@ def compile_prog(funcs: list[CompiledFunction]) -> CODE:
         global_(MAIN),
         *(extern(op.symbol()) for op in UnaryOp),
         *(extern(op.symbol()) for op in BinOp),
-        extern(EXTRACT_BOOL)
+        extern(EXTRACT_BOOL),
+        extern(PRINT_VARARGS)
     ]
     for func in funcs:
         lines.extend(compile_func(func))
