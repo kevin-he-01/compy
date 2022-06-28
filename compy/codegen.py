@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from compy.anf import IMM
-from compy.asm import (AsmLine, Const, Instruction, Label, MemOperand, Operand, Reg, Symbol, WordSize, add, call, cmp, extern,
+from compy.asm import (AsmLine, Const, Label, MemOperand, Operand, Reg, Symbol, WordSize, add, call, cmp, extern,
                        global_, je, lea, mov, pop, push, ret, sub, jmp)
 from compy.common import (MAIN, CompiledFunction, PrimType, SourceSpan, concat,
                           unwrap)
@@ -8,6 +8,8 @@ from compy.stack import op_stack
 from compy.syntax import (IMM_EXPR, IMM_EXPRS, Assignment, BinOp, Binding, Boolean, EvalExpr, ExprScope, Expression, GetType, IfStmt, Integer,
                           Name, NewScope, NoOp, Prim1, Prim2, Print, Scope, Statement,
                           TypeLiteral, UnaryOp, Unit, VarInfo)
+
+# TODO: make CODE iterable and migrate all the functions
 
 CODE = list[AsmLine]
 
@@ -90,12 +92,32 @@ def load_into(reg: Reg, arg: ARG) -> AsmLine:
             return lea(reg, op)
 
 def call_runtime_func(sym_name: str, variadic: bool, args: list[ARG]) -> CODE:
-    assert len(args) <= len(RPARAMS) # TODO: support more than 6 args
-    return [
-        *(load_into(param_reg, arg) for param_reg, arg in zip(RPARAMS, args)),
-        *([ mov(Reg.RAX, Const(0)) ] if variadic else []),
-        call(Symbol(sym_name))
-    ]
+    def iter_helper():
+        code: CODE = [
+            *(load_into(param_reg, arg) for param_reg, arg in zip(RPARAMS, args)),
+            *([ mov(Reg.RAX, Const(0)) ] if variadic else []),
+            call(Symbol(sym_name)),
+        ]
+        if len(args) > len(RPARAMS):
+            extra_args = args[len(RPARAMS):]
+            pad = bool(len(extra_args) % 2)
+            if pad:
+                yield sub(Reg.RSP, Const(8))
+            yield from concat([
+                load_into(Reg.RAX, arg),
+                push(Reg.RAX)
+            ] for arg in extra_args[::-1])
+            # code = concat([
+            #         load_into(Reg.RAX, arg),
+            #         push(Reg.RAX)
+            #     ] for arg in extra_args[::-1]) +\
+            #     ([sub(Reg.RSP, Const(8))] if pad else []) +\
+            #     code + [ add(Reg.RSP, (Const((len(extra_args) + pad) * 8))) ]
+            yield from code
+            yield add(Reg.RSP, (Const((len(extra_args) + pad) * 8)))
+        else:
+            yield from code
+    return list(iter_helper())
 
 # Compile into return registers
 def compile_expr(ex: Expression) -> CODE:

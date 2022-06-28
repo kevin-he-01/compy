@@ -1,5 +1,3 @@
 #! /bin/bash
 
-cd "$(dirname -- "${BASH_SOURCE[0]}")/.." || exit
-set -x
-compy -r samples/test.compy -o ./testexe.out "$@"
+sample-norun -r
