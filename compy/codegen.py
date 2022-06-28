@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Iterable, List
 from compy.anf import IMM
 from compy.asm import (AsmLine, Const, Label, MemOperand, Operand, Reg, Symbol, WordSize, add, call, cmp, extern,
                        global_, je, lea, mov, pop, push, ret, sub, jmp)
@@ -11,7 +12,7 @@ from compy.syntax import (IMM_EXPR, IMM_EXPRS, Assignment, BinOp, Binding, Boole
 
 # TODO: make CODE iterable and migrate all the functions
 
-CODE = list[AsmLine]
+CODE = Iterable[AsmLine]
 
 RVAL = Reg.RAX
 RTYPE = Reg.RDX
@@ -92,32 +93,24 @@ def load_into(reg: Reg, arg: ARG) -> AsmLine:
             return lea(reg, op)
 
 def call_runtime_func(sym_name: str, variadic: bool, args: list[ARG]) -> CODE:
-    def iter_helper():
-        code: CODE = [
-            *(load_into(param_reg, arg) for param_reg, arg in zip(RPARAMS, args)),
-            *([ mov(Reg.RAX, Const(0)) ] if variadic else []),
-            call(Symbol(sym_name)),
-        ]
-        if len(args) > len(RPARAMS):
-            extra_args = args[len(RPARAMS):]
-            pad = bool(len(extra_args) % 2)
-            if pad:
-                yield sub(Reg.RSP, Const(8))
-            yield from concat([
-                load_into(Reg.RAX, arg),
-                push(Reg.RAX)
-            ] for arg in extra_args[::-1])
-            # code = concat([
-            #         load_into(Reg.RAX, arg),
-            #         push(Reg.RAX)
-            #     ] for arg in extra_args[::-1]) +\
-            #     ([sub(Reg.RSP, Const(8))] if pad else []) +\
-            #     code + [ add(Reg.RSP, (Const((len(extra_args) + pad) * 8))) ]
-            yield from code
-            yield add(Reg.RSP, (Const((len(extra_args) + pad) * 8)))
-        else:
-            yield from code
-    return list(iter_helper())
+    code: CODE = [
+        *(load_into(param_reg, arg) for param_reg, arg in zip(RPARAMS, args)),
+        *([ mov(Reg.RAX, Const(0)) ] if variadic else []),
+        call(Symbol(sym_name)),
+    ]
+    if len(args) > len(RPARAMS):
+        extra_args = args[len(RPARAMS):]
+        pad = bool(len(extra_args) % 2)
+        if pad:
+            yield sub(Reg.RSP, Const(8))
+        yield from concat([
+            load_into(Reg.RAX, arg),
+            push(Reg.RAX)
+        ] for arg in extra_args[::-1])
+        yield from code
+        yield add(Reg.RSP, (Const((len(extra_args) + pad) * 8)))
+    else:
+        yield from code
 
 # Compile into return registers
 def compile_expr(ex: Expression) -> CODE:
@@ -131,7 +124,7 @@ def compile_expr(ex: Expression) -> CODE:
         case TypeLiteral(ty=ty):
             return [ mov(RVAL, op_type(ty)), mov(RTYPE, op_type(PrimType.TYPE)) ]
         case GetType(ex=ex):
-            return compile_expr(ex) + [ mov(RVAL, RTYPE), mov(RTYPE, op_type(PrimType.TYPE)) ]
+            return [ *compile_expr(ex), mov(RVAL, RTYPE), mov(RTYPE, op_type(PrimType.TYPE)) ]
         case Prim1(op=op, ex1=inside, span=SourceSpan(lineno=lineno)):
             return call_runtime_func(op.symbol(), False, [Direct(Const(lineno)), imm2arg(inside)])
         case Prim2(op=op, left=left, right=right, span=SourceSpan(lineno=lineno)):
@@ -166,24 +159,26 @@ def compile_if(stmt: IfStmt) -> CODE:
 def compile_statement(st: Statement) -> CODE:
     match st:
         case EvalExpr(expr=ex):
-            return compile_expr(ex)
+            yield from compile_expr(ex)
         case Assignment(info=info, src=src_expr):
-            return compile_expr(src_expr) + assign(unwrap(info))
+            yield from compile_expr(src_expr)
+            yield from assign(unwrap(info))
         case Binding(info=info, init_val=src_expr):
-            return compile_expr(src_expr) + assign(unwrap(info))
+            yield from compile_expr(src_expr)
+            yield from assign(unwrap(info))
         case NoOp():
-            return []
+            pass
         case NewScope(body=scope):
-            return compile_scope(scope)
+            yield from compile_scope(scope)
         # case IfStmt(test=test, body=body, orelse=orelse):
         case IfStmt():
-            return compile_if(st)
+            yield from compile_if(st)
         case _: # pragma: no cover
             assert False, f'Unhandled statement: {type(st)}'
 
 def compile_scope(scope: Scope) -> CODE:
-    # TODO: initialize functions as closures
-    return concat(compile_statement(st) for st in scope.statements)
+    for st in scope.statements:
+        yield from compile_statement(st)
 
 def compile_func(func: CompiledFunction) -> CODE:
     stack_space = unwrap(func.stack_usage, 'Stack space not computed before compile')
@@ -201,10 +196,10 @@ def compile_func(func: CompiledFunction) -> CODE:
         ret(),
     ]
 
-def compile_prog(funcs: list[CompiledFunction]) -> CODE:
+def compile_prog_iter(funcs: list[CompiledFunction]) -> CODE:
     global _state
     _state = CodegenState()
-    lines: CODE = [
+    yield from [
         global_(MAIN),
         *(extern(op.symbol()) for op in UnaryOp),
         *(extern(op.symbol()) for op in BinOp),
@@ -212,5 +207,7 @@ def compile_prog(funcs: list[CompiledFunction]) -> CODE:
         extern(PRINT_VARARGS)
     ]
     for func in funcs:
-        lines.extend(compile_func(func))
-    return lines
+        yield from compile_func(func)
+
+def compile_prog(funcs: list[CompiledFunction]) -> List[AsmLine]:
+    return list(compile_prog_iter(funcs))
