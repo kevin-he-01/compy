@@ -8,10 +8,19 @@
 
 typedef long location_t; // for debug information
 
+// Add panic reasons here
+#define FOREACH_REASON(FUNC) \
+    FUNC(TYPE_ERROR) \
+    FUNC(ARITH_OVERFLOW) \
+    FUNC(DIV_BY_ZERO) \
+    FUNC(EVAL_SYNTAX) \
+    FUNC(IO_ERROR) \
+
+#define REASON_GEN_ENUM(ENUM) ENUM,
+#define REASON_GEN_STRING(STRING) #STRING,
+
 typedef enum {
-    TYPE_ERROR,
-    ARITH_OVERFLOW,
-    DIV_BY_ZERO
+    FOREACH_REASON(REASON_GEN_ENUM)
 } reason_t; // Panic reasons
 
 extern const char* panic_dumpfile;

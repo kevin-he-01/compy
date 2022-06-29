@@ -4,7 +4,7 @@ SOURCES := $(wildcard *.c)
 OBJECTS := $(patsubst %.c,%.o,$(SOURCES))
 DEPENDS := $(patsubst %.c,%.d,$(SOURCES))
 
-ERROR := -Werror=all -Werror=incompatible-pointer-types -Werror=int-conversion -Wno-error=unused-parameter
+ERROR := -Werror=return-type -Werror=implicit -Werror=incompatible-pointer-types -Werror=int-conversion
 WARNING := -Wall -Wextra -Wformat=2 -Wconversion -Wduplicated-cond -Wlogical-op -Wshift-overflow=2 -Wshadow $(ERROR)
 
 CFLAGS ?= -g

@@ -3,5 +3,5 @@
 from subprocess import check_call
 from compy import start
 
-check_call('build-runtime')
+check_call('strict-build-runtime')
 start()

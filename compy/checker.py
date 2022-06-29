@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from compy.common import CompilerState, IntegerOOB
+from compy.common import ArityMismatch, CompilerState, IntegerOOB
 
-from compy.syntax import Integer, Node, NodeWalker
+from compy.syntax import Input, Integer, Node, NodeWalker
 
 
 INT_BITS = 64
@@ -27,5 +27,8 @@ class Checker(NodeWalker[None]):
                 if not (MIN_INT <= v <= MAX_INT):
                     self.state.err(IntegerOOB(val=v, span=node.span))
                 # Integr is a leaf so no recursive walks
+            case Input(args=args):
+                if len(args) not in {0, 1}:
+                    self.state.err(ArityMismatch(f"input() expects 0 or 1 position arguments but got {len(args)}", span=node.span))
             case _:
                 return super().walk(node, ctx)

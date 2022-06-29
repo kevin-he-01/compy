@@ -243,11 +243,11 @@ class UnaryOp(Enum):
         return self.value
 
 class BinOp(Enum):
-    ADD = 'add'
-    SUB = 'sub'
-    MUL = 'mul'
-    DIV = 'div'
-    MOD = 'mod'
+    ADD = 'compy_add'
+    SUB = 'compy_sub'
+    MUL = 'compy_mul'
+    DIV = 'compy_div'
+    MOD = 'compy_mod'
     IS = 'is_identical'
     EQ = 'is_eq'
     LT = 'is_lt'
@@ -272,6 +272,10 @@ class Prim2(Expression):
 
 @dataclass
 class Print(Expression):
+    args: IMM_EXPRS
+
+@dataclass
+class Input(Expression):
     args: IMM_EXPRS
 
 @dataclass

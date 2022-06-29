@@ -6,7 +6,7 @@ from compy.asm import (AsmLine, Const, Label, MemOperand, Operand, Reg, Symbol, 
 from compy.common import (MAIN, CompiledFunction, PrimType, SourceSpan, concat,
                           unwrap)
 from compy.stack import op_stack
-from compy.syntax import (IMM_EXPR, IMM_EXPRS, Assignment, BinOp, Binding, Boolean, EvalExpr, ExprScope, Expression, GetType, IfStmt, Integer,
+from compy.syntax import (IMM_EXPR, IMM_EXPRS, Assignment, BinOp, Binding, Boolean, EvalExpr, ExprScope, Expression, GetType, IfStmt, Input, Integer,
                           Name, NewScope, NoOp, Prim1, Prim2, Print, Scope, Statement,
                           TypeLiteral, UnaryOp, Unit, VarInfo)
 
@@ -23,6 +23,7 @@ RPARAMS = [Reg.RDI, Reg.RSI, Reg.RDX, Reg.RCX, Reg.R8, Reg.R9]
 # Symbols
 EXTRACT_BOOL = 'extract_bool'
 PRINT_VARARGS = 'print_variadic'
+INPUT = 'eval_input'
 
 @dataclass
 class CodegenState:
@@ -31,6 +32,19 @@ class CodegenState:
     def new_label(self) -> str:
         self.label_num += 1
         return f'_compy_label_{self.label_num}'
+
+@dataclass
+class AddrOf:
+    mem_op: MemOperand
+
+@dataclass
+class Direct:
+    op: Operand
+
+NULL = Const(0)
+NULL_ARG = Direct(NULL)
+
+ARG = Direct | AddrOf
 
 def op_type(ty: PrimType):
     return Const(ty.code())
@@ -59,16 +73,6 @@ def sym_binop(op: BinOp) -> Symbol:
 def get_var_offset(name: Name) -> int:
     # TODO: when implementing closures, use effective offset from this call frame's stack
     return unwrap(name.info).get_stack_offset()
-
-@dataclass
-class AddrOf:
-    mem_op: MemOperand
-
-@dataclass
-class Direct:
-    op: Operand
-
-ARG = Direct | AddrOf
 
 def _imm_op(imm: IMM) -> MemOperand:
     match imm:
@@ -131,6 +135,8 @@ def compile_expr(ex: Expression) -> CODE:
             return call_runtime_func(op.symbol(), False, [Direct(Const(lineno)), *imms2args([left, right])])
         case Print(args=args, span=SourceSpan(lineno=lineno)):
             return call_runtime_func(PRINT_VARARGS, True, [Direct(Const(lineno)), Direct(Const(len(args))), *imms2args(args)])
+        case Input(args=args, span=SourceSpan(lineno=lineno)):
+            return call_runtime_func(INPUT, False, [Direct(Const(lineno)), imm2arg(args[0]) if args else NULL_ARG])
         case Unit():
             return load_none()
         case ExprScope(scope=scope):
@@ -204,7 +210,8 @@ def compile_prog_iter(funcs: list[CompiledFunction]) -> CODE:
         *(extern(op.symbol()) for op in UnaryOp),
         *(extern(op.symbol()) for op in BinOp),
         extern(EXTRACT_BOOL),
-        extern(PRINT_VARARGS)
+        extern(PRINT_VARARGS),
+        extern(INPUT),
     ]
     for func in funcs:
         yield from compile_func(func)

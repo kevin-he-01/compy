@@ -9,7 +9,7 @@ if (( $# > 1 )); then
     exit 2
 fi
 
-build-runtime
+strict-build-runtime
 if (( $# == 1 )); then
     set -x
     python3 -m unittest "$1" -v

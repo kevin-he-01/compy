@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stdarg.h>
+#include <string.h>
+#include <errno.h>
 #include "common.h"
 #include "panic.h"
 
@@ -16,7 +19,7 @@ const obj_t one = INT_VAL(1);
 */
 
 #define ARITH_OP(op_name, op_str) \
-obj_t op_name(location_t debug_info, arg_t x, arg_t y) { \
+obj_t compy_##op_name(location_t debug_info, arg_t x, arg_t y) { \
     assert_type(debug_info, op_str, x, TYPE_INT); \
     assert_type(debug_info, op_str, y, TYPE_INT); \
     long result; \
@@ -40,7 +43,7 @@ obj_t op_name(location_t debug_info, arg_t x, arg_t y) { \
 // }
 
 #define DIV_MOD_OP(op_name, op_sym) \
-obj_t op_name(location_t debug_info, arg_t left, arg_t right) { \
+obj_t compy_##op_name(location_t debug_info, arg_t left, arg_t right) { \
     assert_type(debug_info, #op_sym, left, TYPE_INT); \
     assert_type(debug_info, #op_sym, right, TYPE_INT); \
     long lv = left->val.si_int, rv = right->val.si_int; \
@@ -74,6 +77,33 @@ static void print_val(arg_t o) {
     }
 }
 
+static obj_t eval(location_t loc, const char *expr) {
+    type_t type = from_typename(expr);
+    if (type != TYPE_INVALID)
+        return TYPE_VAL(type);
+    char *endptr;
+    if (!strcmp("True", expr)) {
+        return BOOL_VAL(1);
+    } else if (!strcmp("False", expr)) {
+        return BOOL_VAL(0);
+    } else if (!strcmp("None", expr)) {
+        return NONE_VAL;
+    }
+    errno = 0;
+    long ival = strtol(expr, &endptr, 10);
+    if (errno) {
+        // TODO: introduce a new syntax error for evaluation
+        panic(loc, EVAL_SYNTAX, "Bad integer %s: %s", expr, strerror(errno));
+    }
+    if (endptr == expr) {
+        panic(loc, EVAL_SYNTAX, "Bad expression '%s'", expr);
+    }
+    if (*endptr != '\0') { // Disallow things like 1j for now
+        panic(loc, EVAL_SYNTAX, "Integer with trailing suffix '%s' not allowed: %s", endptr, expr);
+    }
+    return INT_VAL(ival);
+}
+
 /////////////////////
 // Runtime exports //
 /////////////////////
@@ -103,6 +133,39 @@ obj_t print_variadic(UNUSED location_t debug_info, int nargs, ...) {
 
 // Arithmetic
 
+// Caller MUST free the returned line after use (transfer ownership of pointer to caller)
+static char *input_line(location_t debug_info, arg_t prompt) {
+    if (prompt) { // Not NULL
+        print_val(prompt);
+        fflush(stdout);
+    }
+    char *line = NULL;
+    size_t len = 0;
+    ssize_t nread;
+
+    if ((nread = getline(&line, &len, stdin)) == -1) {
+        if (feof(stdin)) {
+            panic(debug_info, IO_ERROR, "Reached EOF when reading a line");
+        }
+        panic(debug_info, IO_ERROR, "Error reading line: %s", strerror(errno));
+    }
+
+    // Strip ending newline
+    if (nread && line[nread - 1] == '\n') {
+        line[nread - 1] = '\0';
+    }
+
+    return line;
+}
+
+// The Python 2 input()
+obj_t eval_input(location_t debug_info, arg_t prompt) {
+    char *line = input_line(debug_info, prompt); // TODO: ignore starting and trailing newlines
+    obj_t res = eval(debug_info, line);
+    free(line);
+    return res;
+}
+
 obj_t negate(location_t debug_info, arg_t x) {
     assert_type(debug_info, "negate (-)", x, TYPE_INT);
     long value = x->val.si_int;
@@ -117,11 +180,11 @@ ARITH_OP(sub, "-")
 ARITH_OP(mul, "*")
 
 obj_t add1(location_t debug_info, arg_t x) {
-    return add(debug_info, x, &one);
+    return compy_add(debug_info, x, &one);
 }
 
 obj_t sub1(location_t debug_info, arg_t x) {
-    return sub(debug_info, x, &one);
+    return compy_sub(debug_info, x, &one);
 }
 
 DIV_MOD_OP(div, /)

@@ -88,6 +88,10 @@ class ImmutableVarError(CompileError):
     def __init__(self, var: ID, span: SourceSpan):
         super().__init__(f"Assignment to read-only variable (val or let) '{var}'", span)
 
+class ArityMismatch(CompileError):
+    def __init__(self, msg: str, span: SourceSpan):
+        super().__init__(msg, span) 
+
 class MutableClosureVarError(CompileError):
     def __init__(self, var: ID, span: SourceSpan):
         super().__init__(f"Variable defined outside closure must be immutable (val or let): '{var}' is mutable (var)", span)

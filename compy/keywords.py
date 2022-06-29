@@ -5,6 +5,7 @@ from compy.syntax import UnaryOp
 VAL = 'val'
 VAR = 'var'
 PRINT = 'print'
+INPUT = 'input'
 ADD1 = 'add1'
 SUB1 = 'sub1'
 UNDERSCORE = '_'
@@ -14,7 +15,7 @@ LET = 'let'
 
 PRIM_TYPE_MAP = {'int': PrimType.INT, 'NoneType': PrimType.NONE, 'type': PrimType.TYPE, 'bool': PrimType.BOOL}
 
-ALL_KEYWORDS = {VAL, VAR, PRINT, ADD1, SUB1, UNDERSCORE, TYPE, LET, *PRIM_TYPE_MAP.keys()}
+ALL_KEYWORDS = {VAL, VAR, PRINT, INPUT, ADD1, SUB1, UNDERSCORE, TYPE, LET, *PRIM_TYPE_MAP.keys()}
 
 KW_UNARY_OPS = {ADD1: UnaryOp.ADD1, SUB1: UnaryOp.SUB1}
 
