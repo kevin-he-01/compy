@@ -1,0 +1,9 @@
+print(input())
+print(input())
+print(input() + 10000)
+if input():
+    print(100)
+else:
+    print(-42)
+print(input() == int)
+print(type(input()))
