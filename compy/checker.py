@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from compy.common import ArityMismatch, CompilerState, IntegerOOB
+from compy.common import ArityMismatch, IntegerOOB
+from compy.state import CompilerState
 
 from compy.syntax import Input, Integer, Node, NodeWalker
 

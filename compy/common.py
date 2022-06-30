@@ -1,28 +1,18 @@
 from enum import Enum
 from functools import reduce
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Iterable, TextIO, TypeVar
 
 
+
 if TYPE_CHECKING:
-    import compy.constpool
+    import compy.state
     import compy.syntax
 
 class UserError(Exception):
     pass
 
 ID = str
-
-def init_constpool():
-    import compy.constpool # To avoid a circular import
-    return compy.constpool.ConstPool()
-
-@dataclass
-class CompilerState:
-    errors: list['CompileError'] = field(default_factory=list)
-    const_pool: 'compy.constpool.ConstPool' = field(default_factory=init_constpool)
-    def err(self, error: 'CompileError'):
-        self.errors.append(error)
 
 @dataclass
 class DebugFlags:
@@ -38,7 +28,7 @@ class CompilerInfo:
     debug_flags: DebugFlags
     stdout: TextIO
     stderr: TextIO
-    state: CompilerState = field(default_factory=lambda: CompilerState())
+    state: 'compy.state.CompilerState'
 
     def print(self, msg: str = ''):
         print(msg, file=self.stdout)
@@ -62,6 +52,7 @@ class PrimType(Enum):
     NONE = 1
     TYPE = 2
     BOOL = 3
+    STRING = 4
 
     def code(self) -> int:
         return self.value

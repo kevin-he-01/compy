@@ -251,6 +251,11 @@ class Unit(ConstLiteral): # The only instance of 'None'
         return 0
 
 @dataclass
+class StringLiteral(Expression):
+    content: str
+    data_label: str | None = None # Label in assembly to its data
+
+@dataclass
 class GetType(Expression): # Could be a Prim1, but do not need ex to be immediate for ANF
     ex: Expression
 

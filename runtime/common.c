@@ -7,7 +7,8 @@ static const_str_t type_names[] = {
     "int",
     "NoneType",
     "type",
-    "bool"
+    "bool",
+    "str"
 };
 
 const type_t NUM_TYPES = sizeof(type_names) / sizeof(const_str_t);

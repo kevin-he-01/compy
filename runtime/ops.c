@@ -71,6 +71,9 @@ static void print_val(arg_t o) {
     case TYPE_BOOL:
         printf(o->val.un_int ? "True" : "False");
         break;
+    case TYPE_STRING:
+        printf("%s", o->val.str);
+        break;
     
     default:
         assertm(0, "print_val: Invalid type code");

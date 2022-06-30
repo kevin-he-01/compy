@@ -4,6 +4,7 @@ import sys
 from typing import Sequence, TextIO
 
 import compy.common
+from compy.state import CompilerState
 import compy.syntax
 import compy.pipeline
 
@@ -39,7 +40,7 @@ def main(args: Sequence[str] | None = None, stdout: TextIO = sys.stdout, stderr:
     if out_path is None: # pragma: no cover
         out_path = prefix + '.out'
     flags = compy.common.DebugFlags(d_pipeline, d_asm, d_obj)
-    info = compy.common.CompilerInfo(source, prefix, out_path, flags, stdout, stderr)
+    info = compy.common.CompilerInfo(source, prefix, out_path, flags, stdout, stderr, CompilerState())
     compy.pipeline.run(info)
     if run: # pragma: no cover
         print('=====Running executable=====')

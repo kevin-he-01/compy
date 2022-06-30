@@ -1,7 +1,8 @@
 # ANF: Convert expressions to A-Normal Form
 
 from dataclasses import dataclass, field
-from compy.common import CompiledFunction, CompilerState
+from compy.common import CompiledFunction
+from compy.state import CompilerState
 from compy.syntax import Binding, ConstLiteral, Expression, ImmConstLiteral, Name, NewScope, Node, Scope, ScopeInformation, Statement, VarInfo, mk_exprscope
 
 # List of immediate types for ANF purposes:

@@ -1,8 +1,9 @@
 from dataclasses import dataclass, field
 
-from compy.common import (ID, MAIN, CompiledFunction, CompilerState,
+from compy.common import (ID, MAIN, CompiledFunction,
                           ImmutableVarError, MutableClosureVarError,
                           SourceSpan, UnboundVarError)
+from compy.state import CompilerState
 from compy.syntax import (Assignment, Binding, Name, Node, NodeWalker, Scope,
                           ScopeInformation, VarInfo)
 

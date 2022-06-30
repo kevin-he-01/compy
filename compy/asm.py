@@ -3,7 +3,7 @@ from enum import Enum
 import os
 import subprocess
 import tempfile
-from typing import TextIO
+from typing import Iterable, TextIO
 
 from compy.common import CompilerInfo
 
@@ -157,6 +157,9 @@ def ret():
 
 def dq(val: Const):
     return Instruction('dq', [val])
+
+def db_s(vals: Iterable[Const]):
+    return Instruction('db', list(vals))
 
 # Instructions end
 

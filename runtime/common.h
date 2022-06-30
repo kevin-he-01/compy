@@ -14,6 +14,7 @@ typedef union {
     signed long si_int; // signed int
     unsigned long un_int; // unsigned int
     double flt; // floating point
+    const char *str; // string literal
     type_t type;
 } value_t;
 
@@ -29,7 +30,7 @@ typedef const obj_t* arg_t;
 #define TYPE_NONE (1UL)
 #define TYPE_TYPE (2UL)
 #define TYPE_BOOL (3UL)
-// #define TYPE_STRING (4UL)
+#define TYPE_STRING (4UL)
 #define TYPE_INVALID ((type_t) (-1))
 ////// Valid compy types end //////
 

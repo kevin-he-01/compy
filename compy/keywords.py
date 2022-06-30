@@ -13,7 +13,7 @@ UNDERSCORE = '_'
 TYPE = 'type'
 LET = 'let'
 
-PRIM_TYPE_MAP = {'int': PrimType.INT, 'NoneType': PrimType.NONE, 'type': PrimType.TYPE, 'bool': PrimType.BOOL}
+PRIM_TYPE_MAP = {'int': PrimType.INT, 'NoneType': PrimType.NONE, 'type': PrimType.TYPE, 'bool': PrimType.BOOL, 'str': PrimType.STRING}
 
 ALL_KEYWORDS = {VAL, VAR, PRINT, INPUT, ADD1, SUB1, UNDERSCORE, TYPE, LET, *PRIM_TYPE_MAP.keys()}
 

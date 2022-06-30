@@ -90,7 +90,9 @@ def parse_expr(ex: ast.expr) -> syn.Expression:
                     return syn.Boolean(span=span, value=x)
                 case int(x):
                     return syn.Integer(span=span, value=x)
-                # TODO: strings, etc.
+                case str(s):
+                    return syn.StringLiteral(span=span, content=s)
+                # TODO: bytes
                 case _: # pragma: no cover
                     raise CompileError(msg=f"Unknown literal {v}", span=span)
         case ast.Call(func=ast.Name(id=kw.TYPE), args=[ex1], keywords=[]):

@@ -11,7 +11,7 @@ from compy.stack import op_stack
 from compy.syntax import (IMM_EXPR, IMM_EXPRS, Assignment, Binding, BinOp,
                           ConstLiteral, EvalExpr, Expression, ExprScope,
                           GetType, IfStmt, ImmConstLiteral, Input, Name, NewScope, NoOp, Prim1,
-                          Prim2, Print, Scope, Statement, UnaryOp, VarInfo)
+                          Prim2, Print, Scope, Statement, StringLiteral, UnaryOp, VarInfo)
 
 CODE = Iterable[AsmLine]
 
@@ -126,6 +126,8 @@ def compile_expr(ex: Expression) -> CODE:
             return read_var_at(get_var_offset(ex))
         case ConstLiteral():
             return [ mov(RVAL, Const(ex.val())), mov(RTYPE, op_type(ex.type())) ]
+        case StringLiteral(data_label=data_label):
+            return [ lea(RVAL, MemRel(Symbol(unwrap(data_label)), size=WordSize.NONE)), mov(RTYPE, op_type(PrimType.STRING)) ]
         case GetType(ex=ex):
             return [ *compile_expr(ex), mov(RVAL, RTYPE), mov(RTYPE, op_type(PrimType.TYPE)) ]
         case Prim1(op=op, ex1=inside, span=SourceSpan(lineno=lineno)):
@@ -210,6 +212,7 @@ def compile_prog_iter(info: CompilerInfo, funcs: list[CompiledFunction]) -> CODE
         extern(PRINT_VARARGS),
         extern(INPUT),
         section('.rodata'),
+        *info.state.string_pool.to_asm(),
         *info.state.const_pool.to_asm(),
         section('.text'),
     ]

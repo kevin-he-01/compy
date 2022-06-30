@@ -5,6 +5,7 @@ import compy.asm
 import compy.checker
 import compy.codegen
 import compy.parser
+import compy.strliteral
 import compy.stack
 import compy.tagger
 import compy.anf
@@ -32,6 +33,7 @@ def run(info: CompilerInfo):
         raise ce
     compy.checker.check(info.state, top)
     debug('Bare AST', lambda: pprint(top))
+    compy.strliteral.process_str(info.state, top)
     funcs = compy.tagger.tag(info.state, top)
     debug('Tagged AST', lambda: pprint(top))
 
