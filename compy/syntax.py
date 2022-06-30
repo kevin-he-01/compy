@@ -1,12 +1,10 @@
 from dataclasses import dataclass, field, fields
 from enum import Enum
 import sys
-from typing import (Annotated, Any, Generic, Iterable, TypeAlias, TypeVar, get_args,
+from typing import (Annotated, Any, Generic, Iterable, TypeVar, get_args,
                     get_origin, get_type_hints)
 
-import compy.common
-
-ID: TypeAlias = 'compy.common.ID'
+from compy.common import ID, SourceSpan, PrimType, unwrap
 
 ## Type annotations
 
@@ -36,7 +34,7 @@ class VarInfo:
     var_id: int = field(default_factory=gen_var_id)
 
     def get_stack_offset(self, fail_msg: str = 'Stack offset not computed yet!'):
-        return compy.common.unwrap(self.stack_offset, fail_msg)
+        return unwrap(self.stack_offset, fail_msg)
 
 @dataclass
 class FuncInfo:
@@ -72,11 +70,11 @@ class Node: # Base class of everythingd
 
 @dataclass
 class Statement(Node):
-    span: 'compy.common.SourceSpan'
+    span: SourceSpan = field(compare=False)
 
 @dataclass
 class Expression(Node):
-    span: 'compy.common.SourceSpan'
+    span: SourceSpan = field(compare=False)
 
 @dataclass
 class EvalExpr(Statement): # Evaluate an expression for its side effects only, ignoring its value
@@ -185,7 +183,7 @@ class Binding(Statement):
 class Assignment(Statement):
     name: ID
     src: Expression
-    target_span: 'compy.common.SourceSpan'
+    target_span: SourceSpan
     info: INFO_ID | None = None
 
 @dataclass
@@ -204,6 +202,16 @@ class IfStmt(Statement):
 
 ## Begin concrete AST expressions
 
+class ConstLiteral(Expression):
+    def type(self) -> PrimType:
+        raise NotImplementedError
+    def val(self) -> int: # Underlying representation
+        raise NotImplementedError 
+
+@dataclass
+class ImmConstLiteral(Expression):
+    symbol: str
+
 @dataclass
 class Name(Expression):
     name: ID
@@ -212,20 +220,35 @@ class Name(Expression):
     # Stack offset in the CURRENT function (can be different from info.stack_offset when it is a closure free variable)
 
 @dataclass
-class Integer(Expression):
+class Integer(ConstLiteral):
     value: int
+    def type(self) -> PrimType:
+        return PrimType.INT
+    def val(self) -> int:
+        return self.value
 
 @dataclass
-class Boolean(Expression):
+class Boolean(ConstLiteral):
     value: bool
+    def type(self) -> PrimType:
+        return PrimType.BOOL
+    def val(self) -> int:
+        return int(self.value)
 
 @dataclass
-class TypeLiteral(Expression):
-    ty: 'compy.common.PrimType'
+class TypeLiteral(ConstLiteral):
+    ty: PrimType
+    def type(self) -> PrimType:
+        return PrimType.TYPE
+    def val(self) -> int:
+        return self.ty.code()
 
 @dataclass
-class Unit(Expression): # The only instance of 'None'
-    pass
+class Unit(ConstLiteral): # The only instance of 'None'
+    def type(self) -> PrimType:
+        return PrimType.NONE
+    def val(self) -> int:
+        return 0
 
 @dataclass
 class GetType(Expression): # Could be a Prim1, but do not need ex to be immediate for ANF
@@ -282,7 +305,7 @@ class Input(Expression):
 class ExprScope(Expression):
     scope: Scope
 
-def mk_exprscope(span: 'compy.common.SourceSpan', ss: list[Statement], expr: Expression, info: ScopeInformation | None = None) -> ExprScope:
+def mk_exprscope(span: SourceSpan, ss: list[Statement], expr: Expression, info: ScopeInformation | None = None) -> ExprScope:
     return ExprScope(span=span, scope=Scope(ss + [EvalExpr(span=expr.span, expr=expr)], info=info))
 
 # TODO: add function expr AST node that generates a unique ID upon instantiation

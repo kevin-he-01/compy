@@ -1,19 +1,17 @@
 # ANF: Convert expressions to A-Normal Form
 
 from dataclasses import dataclass, field
-from compy.common import CompiledFunction
-from compy.syntax import Binding, Expression, Name, NewScope, Node, Scope, ScopeInformation, Statement, VarInfo, mk_exprscope
+from compy.common import CompiledFunction, CompilerState
+from compy.syntax import Binding, ConstLiteral, Expression, ImmConstLiteral, Name, NewScope, Node, Scope, ScopeInformation, Statement, VarInfo, mk_exprscope
 
 # List of immediate types for ANF purposes:
-IMM = Name
-# TODO: make it IMM = Name | Const
-# where Const denote a stored constant
+IMM = Name | ImmConstLiteral
 
-def anf(funcs: list[CompiledFunction]):
+def anf(comp_state: CompilerState, funcs: list[CompiledFunction]):
     for func in funcs:
-        state = ANFState()
+        anf_state = ANFState()
         def visit(node: Node) -> Node:
-            binds = BindingsBuilder(state)
+            binds = BindingsBuilder(comp_state, anf_state)
             for field in node.child_fields():
                 need_imm = field.need_imm
                 def process(cnode: Node) -> Node:
@@ -52,15 +50,18 @@ class ANFState:
 
 @dataclass
 class BindingsBuilder:
-    state: ANFState
+    comp_state: CompilerState
+    anf_state: ANFState
     bindings: list[Statement] = field(default_factory=list)
 
     def process_imm_expr(self, expr: Expression) -> IMM:
         match expr:
             case Name(): # Already an immediate
                 return expr
+            case ConstLiteral():
+                return self.comp_state.const_pool.pool(expr)
             case _:
-                var_name = self.state.get_var_name()
+                var_name = self.anf_state.get_var_name()
                 info = VarInfo(origin_function_id=-1, mutable=False)
                 self.bindings.append(Binding(span=expr.span, mutable=False,
                     name=var_name,

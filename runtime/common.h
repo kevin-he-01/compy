@@ -29,6 +29,7 @@ typedef const obj_t* arg_t;
 #define TYPE_NONE (1UL)
 #define TYPE_TYPE (2UL)
 #define TYPE_BOOL (3UL)
+// #define TYPE_STRING (4UL)
 #define TYPE_INVALID ((type_t) (-1))
 ////// Valid compy types end //////
 

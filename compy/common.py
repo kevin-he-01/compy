@@ -1,18 +1,26 @@
 from enum import Enum
 from functools import reduce
 from dataclasses import dataclass, field
-from typing import Iterable, TextIO, TypeVar
+from typing import TYPE_CHECKING, Iterable, TextIO, TypeVar
 
-import compy.syntax
+
+if TYPE_CHECKING:
+    import compy.constpool
+    import compy.syntax
 
 class UserError(Exception):
     pass
 
 ID = str
 
+def init_constpool():
+    import compy.constpool # To avoid a circular import
+    return compy.constpool.ConstPool()
+
 @dataclass
 class CompilerState:
     errors: list['CompileError'] = field(default_factory=list)
+    const_pool: 'compy.constpool.ConstPool' = field(default_factory=init_constpool)
     def err(self, error: 'CompileError'):
         self.errors.append(error)
 

@@ -74,6 +74,12 @@ class MemRegOffset(MemOperand):
     def address(self) -> str:
         return self.reg.assemble() + offset_suffix(self.offset)
 
+@dataclass
+class MemRel(MemOperand):
+    sym: Symbol
+    def address(self) -> str:
+        return 'rel ' + self.sym.name
+
 class AsmLine:
     def assemble(self) -> str:
         raise NotImplementedError
@@ -107,6 +113,9 @@ def global_(sym: str):
 
 def extern(sym: str):
     return Directive('extern', sym)
+
+def section(sec: str):
+    return Directive('section', sec)
 
 # Instructions
 
@@ -146,9 +155,10 @@ def pop(arg: Operand):
 def ret():
     return Instruction('ret', [])
 
-# Instructions end
+def dq(val: Const):
+    return Instruction('dq', [val])
 
-PREAMBLE = "section .text\n"
+# Instructions end
 
 def output(dst: TextIO, lines: list[AsmLine]):
     dst.writelines(line.asm_line() for line in lines)
@@ -166,7 +176,6 @@ def build(info: CompilerInfo, lines: list[AsmLine]):
         nasm_file = prefix(info.debug_flags.asm) + '.nasm'
         obj_file = prefix(info.debug_flags.obj) + '.o'
         with open(nasm_file, 'w') as nasm:
-            nasm.write(PREAMBLE)
             output(nasm, lines)
         oprint('#### Running build commands...')
         run_cmd(['nasm', '-f', 'elf64', '-o', obj_file, nasm_file])

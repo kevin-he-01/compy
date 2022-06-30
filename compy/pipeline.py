@@ -43,10 +43,10 @@ def run(info: CompilerInfo):
     # TODO: report warnings but don't terminate
 
     # All steps starting now SHOULD NOT fail!
-    compy.anf.anf(funcs)
+    compy.anf.anf(info.state, funcs)
     debug('ANF AST', lambda: pprint(top))
     compy.stack.allocate_stack(funcs)
     debug('Post stack processing', lambda: pprint(top))
-    lines = compy.codegen.compile_prog(funcs)
+    lines = compy.codegen.compile_prog(info, funcs)
     compy.asm.build(info, lines)
     oprint('Build successful!')

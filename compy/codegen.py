@@ -1,16 +1,17 @@
 from dataclasses import dataclass
 from typing import Iterable, List
+
 from compy.anf import IMM
-from compy.asm import (AsmLine, Const, Label, MemOperand, Operand, Reg, Symbol, WordSize, add, call, cmp, extern,
-                       global_, je, lea, mov, pop, push, ret, sub, jmp)
-from compy.common import (MAIN, CompiledFunction, PrimType, SourceSpan, concat,
+from compy.asm import (AsmLine, Const, Label, MemOperand, MemRel, Operand, Reg, Symbol,
+                       WordSize, add, call, cmp, extern, global_, je, jmp, lea,
+                       mov, pop, push, ret, section, sub)
+from compy.common import (MAIN, CompiledFunction, CompilerInfo, PrimType, SourceSpan, concat,
                           unwrap)
 from compy.stack import op_stack
-from compy.syntax import (IMM_EXPR, IMM_EXPRS, Assignment, BinOp, Binding, Boolean, EvalExpr, ExprScope, Expression, GetType, IfStmt, Input, Integer,
-                          Name, NewScope, NoOp, Prim1, Prim2, Print, Scope, Statement,
-                          TypeLiteral, UnaryOp, Unit, VarInfo)
-
-# TODO: make CODE iterable and migrate all the functions
+from compy.syntax import (IMM_EXPR, IMM_EXPRS, Assignment, Binding, BinOp,
+                          ConstLiteral, EvalExpr, Expression, ExprScope,
+                          GetType, IfStmt, ImmConstLiteral, Input, Name, NewScope, NoOp, Prim1,
+                          Prim2, Print, Scope, Statement, UnaryOp, VarInfo)
 
 CODE = Iterable[AsmLine]
 
@@ -78,6 +79,8 @@ def _imm_op(imm: IMM) -> MemOperand:
     match imm:
         case Name():
             return op_stack(get_var_offset(imm), size=WordSize.NONE)
+        case ImmConstLiteral(symbol=sym):
+            return MemRel(Symbol(sym), size=WordSize.NONE)
 
 def imm_op(imm: IMM_EXPR) -> MemOperand:
     assert isinstance(imm, IMM), 'Expected an immediate'
@@ -121,12 +124,8 @@ def compile_expr(ex: Expression) -> CODE:
     match ex:
         case Name():
             return read_var_at(get_var_offset(ex))
-        case Integer(value=value):
-            return [ mov(RVAL, Const(value)), mov(RTYPE, op_type(PrimType.INT)) ]
-        case Boolean(value=value):
-            return [ mov(RVAL, Const(int(value))), mov(RTYPE, op_type(PrimType.BOOL)) ]
-        case TypeLiteral(ty=ty):
-            return [ mov(RVAL, op_type(ty)), mov(RTYPE, op_type(PrimType.TYPE)) ]
+        case ConstLiteral():
+            return [ mov(RVAL, Const(ex.val())), mov(RTYPE, op_type(ex.type())) ]
         case GetType(ex=ex):
             return [ *compile_expr(ex), mov(RVAL, RTYPE), mov(RTYPE, op_type(PrimType.TYPE)) ]
         case Prim1(op=op, ex1=inside, span=SourceSpan(lineno=lineno)):
@@ -137,8 +136,6 @@ def compile_expr(ex: Expression) -> CODE:
             return call_runtime_func(PRINT_VARARGS, True, [Direct(Const(lineno)), Direct(Const(len(args))), *imms2args(args)])
         case Input(args=args, span=SourceSpan(lineno=lineno)):
             return call_runtime_func(INPUT, False, [Direct(Const(lineno)), imm2arg(args[0]) if args else NULL_ARG])
-        case Unit():
-            return load_none()
         case ExprScope(scope=scope):
             return compile_scope(scope)
         case _: # pragma: no cover
@@ -202,7 +199,7 @@ def compile_func(func: CompiledFunction) -> CODE:
         ret(),
     ]
 
-def compile_prog_iter(funcs: list[CompiledFunction]) -> CODE:
+def compile_prog_iter(info: CompilerInfo, funcs: list[CompiledFunction]) -> CODE:
     global _state
     _state = CodegenState()
     yield from [
@@ -212,9 +209,12 @@ def compile_prog_iter(funcs: list[CompiledFunction]) -> CODE:
         extern(EXTRACT_BOOL),
         extern(PRINT_VARARGS),
         extern(INPUT),
+        section('.rodata'),
+        *info.state.const_pool.to_asm(),
+        section('.text'),
     ]
     for func in funcs:
         yield from compile_func(func)
 
-def compile_prog(funcs: list[CompiledFunction]) -> List[AsmLine]:
-    return list(compile_prog_iter(funcs))
+def compile_prog(info: CompilerInfo, funcs: list[CompiledFunction]) -> List[AsmLine]:
+    return list(compile_prog_iter(info, funcs))
