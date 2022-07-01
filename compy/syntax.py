@@ -282,6 +282,8 @@ class BinOp(Enum):
     GT = 'is_gt'
     LE = 'is_le'
     GE = 'is_ge'
+    AND = 'boolean_and'
+    OR = 'boolean_or'
 
     # Runtime call symbol
     def symbol(self) -> str:

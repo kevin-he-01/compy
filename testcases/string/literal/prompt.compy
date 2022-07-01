@@ -1,9 +1,7 @@
 val(fav_num = input("What is your favorite number? "))
 if fav_num == 13:
     print("I don't like this number...")
-elif fav_num == 1337:
-    print("Me too")
-elif fav_num == 42:
+elif fav_num == 1337 or fav_num == 42:
     print("Me too")
 elif type(fav_num) != int:
     print("Please enter a number!")
