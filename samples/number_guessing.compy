@@ -1,0 +1,22 @@
+val(seed := input('Enter a seed (Ex. current date/time) '))
+# val(seed := 1337)
+var(i := 0)
+var(rand_num := seed)
+while i < 100:
+    rand_num = (rand_num * 31 + 17) % 65537
+    i = i + 1
+rand_num = 1 + rand_num % 100
+# print('My number is:', rand_num) # Cheating
+var(win := False)
+while not win:
+    val(num := input('Guess my number (between 1 and 100): '))
+    if type(num) == int:
+        if num == rand_num:
+            win = True
+            print('Congrats! You guessed the number')
+        elif num < rand_num:
+            print('Too small')
+        else:
+            print('Too big!')
+    else:
+        print('Not a number. Try again!')

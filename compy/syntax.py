@@ -196,9 +196,14 @@ class NewScope(Statement):
 
 @dataclass
 class IfStmt(Statement):
-    test: IMM_EXPR
+    test: Expression
     body: Scope
     orelse: Scope
+
+@dataclass
+class While(Statement):
+    test: Expression
+    body: Scope
 
 ## Begin concrete AST expressions
 

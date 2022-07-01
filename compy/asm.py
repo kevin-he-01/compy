@@ -134,6 +134,9 @@ def add(op1: Operand, op2: Operand):
 def sub(op1: Operand, op2: Operand):
     return Instruction('sub', [op1, op2])
 
+def jne(dst: Operand):
+    return Instruction('jne', [dst])
+
 def je(dst: Operand):
     return Instruction('je', [dst])
 

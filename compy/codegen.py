@@ -3,7 +3,7 @@ from typing import Iterable, List
 
 from compy.anf import IMM
 from compy.asm import (AsmLine, Const, Label, MemOperand, MemRel, Operand, Reg, Symbol,
-                       WordSize, add, call, cmp, extern, global_, je, jmp, lea,
+                       WordSize, add, call, cmp, extern, global_, je, jmp, jne, lea,
                        mov, pop, push, ret, section, sub)
 from compy.common import (MAIN, CompiledFunction, CompilerInfo, PrimType, SourceSpan, concat,
                           unwrap)
@@ -11,7 +11,7 @@ from compy.stack import op_stack
 from compy.syntax import (IMM_EXPR, IMM_EXPRS, Assignment, Binding, BinOp,
                           ConstLiteral, EvalExpr, Expression, ExprScope,
                           GetType, IfStmt, ImmConstLiteral, Input, Name, NewScope, NoOp, Prim1,
-                          Prim2, Print, Scope, Statement, StringLiteral, UnaryOp, VarInfo)
+                          Prim2, Print, Scope, Statement, StringLiteral, UnaryOp, VarInfo, While)
 
 CODE = Iterable[AsmLine]
 
@@ -143,14 +143,17 @@ def compile_expr(ex: Expression) -> CODE:
         case _: # pragma: no cover
             assert False, f'Unhandled expression: {type(ex)}'
 
+def extract_bool(lineno: int) -> CODE:
+    assert RPARAMS[0] != RVAL
+    assert RPARAMS[2] == RTYPE
+    return [mov(RPARAMS[0], Const(lineno)), mov(RPARAMS[1], RVAL), call(Symbol(EXTRACT_BOOL))]
+
 def compile_if(stmt: IfStmt) -> CODE:
     label_false = _state.new_label()
     label_end = _state.new_label()
-    op = imm_op(stmt.test)
     return [
-        mov(RPARAMS[0], Const(stmt.span.lineno)),
-        lea(RPARAMS[1], op),
-        call(Symbol(EXTRACT_BOOL)),
+        *compile_expr(stmt.test),
+        *extract_bool(stmt.span.lineno),
         cmp(RVAL, Const(0)),
         je(Symbol(label_false)),
         *compile_scope(stmt.body),
@@ -158,6 +161,20 @@ def compile_if(stmt: IfStmt) -> CODE:
         Label(label_false),
         *compile_scope(stmt.orelse),
         Label(label_end)
+    ]
+
+def compile_while(stmt: While) -> CODE:
+    label_start = _state.new_label()
+    label_cond = _state.new_label()
+    return [
+        jmp(Symbol(label_cond)),
+        Label(label_start),
+        *compile_scope(stmt.body),
+        Label(label_cond),
+        *compile_expr(stmt.test),
+        *extract_bool(stmt.span.lineno),
+        cmp(RVAL, Const(0)),
+        jne(Symbol(label_start)),
     ]
 
 # TODO: accept return label as second arg for compile_scope and compile_statement
@@ -178,6 +195,8 @@ def compile_statement(st: Statement) -> CODE:
         # case IfStmt(test=test, body=body, orelse=orelse):
         case IfStmt():
             yield from compile_if(st)
+        case While():
+            yield from compile_while(st)
         case _: # pragma: no cover
             assert False, f'Unhandled statement: {type(st)}'
 

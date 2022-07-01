@@ -195,10 +195,10 @@ DIV_MOD_OP(mod, %)
 
 // Boolean
 
-unsigned long extract_bool(location_t debug_info, arg_t b) {
+unsigned long extract_bool(location_t debug_info, obj_t b) {
     // TODO: accept strings other than "if statement", like "if expression" via an argument
-    assert_type(debug_info, "if statement", b, TYPE_BOOL);
-    return b->val.un_int;
+    assert_type(debug_info, "boolean required here", &b, TYPE_BOOL);
+    return b.val.un_int;
 }
 
 obj_t boolean_not(location_t debug_info, arg_t b) {

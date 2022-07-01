@@ -180,6 +180,10 @@ def parse_statement(s: ast.stmt) -> syn.Statement:
             return syn.NewScope(body=parse_statements(stmts),span=span)
         case ast.If(test=test, body=body, orelse=orelse):
             return syn.IfStmt(span=span, test=parse_expr(test), body=parse_statements(body), orelse=parse_statements(orelse))
+        case ast.While(test=test, body=body, orelse=[]):
+            return syn.While(span=span, test=parse_expr(test), body=parse_statements(body))
+        case ast.While():
+            raise CompileError(msg='`while` with `else:` clause not supported yet', span=span) # pragma: no cover
         case _: # pragma: no cover
             print(ast.dump(s, indent=2))
             raise CompileError(msg="Unknown statement", span=span)
