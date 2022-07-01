@@ -91,6 +91,9 @@ def parse_expr(ex: ast.expr) -> syn.Expression:
                 case int(x):
                     return syn.Integer(span=span, value=x)
                 case str(s):
+                    if '\0' in s: # pragma: no cover
+                        # Need to wait until we represent string in (data, length) tuple format
+                        raise CompileError(msg='String with NUL characters not supported yet!', span=span)
                     return syn.StringLiteral(span=span, content=s)
                 # TODO: bytes
                 case _: # pragma: no cover
@@ -131,12 +134,22 @@ def parse_assignment(span_stmt: SourceSpan, target: ast.expr, src: ast.expr) -> 
 
 def parse_stmt_expr(span_stmt: SourceSpan, ex: ast.expr) -> syn.Statement:
     match ex:
+        # Legacy val/var binding form (via Python keyword arguments): val(x = <expr>)
         case ast.Call(func=ast.Name(id=(kw.VAL | kw.VAR as ty)), args=[], keywords=[ast.keyword(arg=name, value=ex) as keyword]):
             mutable = ty == kw.VAR
             if name is None:
                 raise CompileError('Bad val/var binding', span_stmt)
             validate_name(span_ast(keyword), name)
             return syn.Binding(span=span_stmt, mutable=mutable, name=name, init_val=parse_expr(ex))
+        # Alternate val/var binding form: val(x := <expr>), functionally equivalent to above
+        # This form helps semantic highlighting in VSCode to know the variable names
+        # See https://code.visualstudio.com/api/language-extensions/semantic-highlight-guide
+        case ast.Call(func=ast.Name(id=(kw.VAL | kw.VAR as ty)),
+                args=[ast.NamedExpr(target=ast.Name(id=id_name, ctx=ast.Store()) as name, value=src)],
+                keywords=[]):
+            mutable = ty == kw.VAR
+            validate_name(span_ast(name), id_name)
+            return syn.Binding(span=span_stmt, mutable=mutable, name=id_name, init_val=parse_expr(src))
         case _:
             return syn.EvalExpr(span=span_stmt, expr=parse_expr(ex))
 

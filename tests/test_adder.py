@@ -31,6 +31,9 @@ class TestAdder(common.CompyTestCase):
     def test_vars3(self):
         self.success_case('vars3', VARS3_OUTPUT)
 
+    def test_vars3_alt(self):
+        self.success_case('vars3-alt', VARS3_OUTPUT)
+
     def test_expr(self):
         self.success_case('expr', b'5\n')
 

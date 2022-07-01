@@ -1,0 +1,10 @@
+# With only constant string literals (no dynamically allocated string)
+# Content equality works with just strict equality since equal strings literals are canonicalized
+print('abc' == 'abc')
+print('abc' == 'abc\n')
+print('COMPY' == 'compy')
+val(x := 'egg')
+val(y := 'yolk')
+print(x == x)
+print(x == y)
+print(y == y)
