@@ -10,7 +10,7 @@ from compy.common import (MAIN, CompiledFunction, CompilerInfo, PrimType, Source
 from compy.stack import op_stack
 from compy.syntax import (IMM_EXPR, IMM_EXPRS, Assignment, Binding, BinOp,
                           ConstLiteral, EvalExpr, Expression, ExprScope,
-                          GetType, IfStmt, ImmConstLiteral, Input, Name, NewScope, NoOp, Prim1,
+                          GetType, IfExpr, IfStmt, ImmConstLiteral, Input, Name, NewScope, NoOp, Prim1,
                           Prim2, Print, Scope, Statement, StringLiteral, UnaryOp, VarInfo, While)
 
 CODE = Iterable[AsmLine]
@@ -119,6 +119,26 @@ def call_runtime_func(sym_name: str, variadic: bool, args: list[ARG]) -> CODE:
     else:
         yield from code
 
+def extract_bool(lineno: int) -> CODE:
+    assert RPARAMS[0] != RVAL
+    assert RPARAMS[2] == RTYPE
+    return [mov(RPARAMS[0], Const(lineno)), mov(RPARAMS[1], RVAL), call(Symbol(EXTRACT_BOOL))]
+
+def compile_if_common(test: CODE, body: CODE, orelse: CODE, lineno: int) -> CODE:
+    label_false = _state.new_label()
+    label_end = _state.new_label()
+    return [
+        *test,
+        *extract_bool(lineno),
+        cmp(RVAL, Const(0)),
+        je(Symbol(label_false)),
+        *body,
+        jmp(Symbol(label_end)),
+        Label(label_false),
+        *orelse,
+        Label(label_end)
+    ]
+
 # Compile into return registers
 def compile_expr(ex: Expression) -> CODE:
     match ex:
@@ -140,28 +160,14 @@ def compile_expr(ex: Expression) -> CODE:
             return call_runtime_func(INPUT, False, [Direct(Const(lineno)), imm2arg(args[0]) if args else NULL_ARG])
         case ExprScope(scope=scope):
             return compile_scope(scope)
+        case IfExpr(test=test, body=body, orelse=orelse, span=SourceSpan(lineno=lineno)):
+            return compile_if_common(
+                compile_expr(test),
+                compile_expr(body),
+                compile_expr(orelse),
+                lineno)
         case _: # pragma: no cover
             assert False, f'Unhandled expression: {type(ex)}'
-
-def extract_bool(lineno: int) -> CODE:
-    assert RPARAMS[0] != RVAL
-    assert RPARAMS[2] == RTYPE
-    return [mov(RPARAMS[0], Const(lineno)), mov(RPARAMS[1], RVAL), call(Symbol(EXTRACT_BOOL))]
-
-def compile_if(stmt: IfStmt) -> CODE:
-    label_false = _state.new_label()
-    label_end = _state.new_label()
-    return [
-        *compile_expr(stmt.test),
-        *extract_bool(stmt.span.lineno),
-        cmp(RVAL, Const(0)),
-        je(Symbol(label_false)),
-        *compile_scope(stmt.body),
-        jmp(Symbol(label_end)),
-        Label(label_false),
-        *compile_scope(stmt.orelse),
-        Label(label_end)
-    ]
 
 def compile_while(stmt: While) -> CODE:
     label_start = _state.new_label()
@@ -192,9 +198,12 @@ def compile_statement(st: Statement) -> CODE:
             pass
         case NewScope(body=scope):
             yield from compile_scope(scope)
-        # case IfStmt(test=test, body=body, orelse=orelse):
-        case IfStmt():
-            yield from compile_if(st)
+        case IfStmt(test=test, body=body, orelse=orelse, span=SourceSpan(lineno=lineno)):
+            yield from compile_if_common(
+                compile_expr(test),
+                compile_scope(body),
+                compile_scope(orelse),
+                lineno)
         case While():
             yield from compile_while(st)
         case _: # pragma: no cover

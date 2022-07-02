@@ -1,0 +1,9 @@
+print(let(u := print(0), False) or let(u := print(1), False))
+print(let(u := print(0), False) or let(u := print(1), True))
+print(let(u := print(0), True) or let(u := print(1), False))
+print(let(u := print(0), True) or let(u := print(1), True))
+
+print(let(u := print(0), False) and let(u := print(1), False))
+print(let(u := print(0), False) and let(u := print(1), True))
+print(let(u := print(0), True) and let(u := print(1), False))
+print(let(u := print(0), True) and let(u := print(1), True))

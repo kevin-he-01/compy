@@ -264,6 +264,12 @@ class StringLiteral(Expression):
 class GetType(Expression): # Could be a Prim1, but do not need ex to be immediate for ANF
     ex: Expression
 
+@dataclass
+class IfExpr(Expression):
+    test: Expression
+    body: Expression
+    orelse: Expression
+
 class UnaryOp(Enum):
     NEGATE = 'negate'
     # PRINT = 'print' # Removed

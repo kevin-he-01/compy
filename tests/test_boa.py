@@ -50,11 +50,20 @@ class TestBoaBool(common.CompyTestCase):
     def test_bool_neg(self):
         self.success_case('bool-neg', b'False\nTrue\n')
     
+    def test_bool_logical(self):
+        self.success_case('bool-logical0', LOGICAL0_OUTPUT)
+
+    def test_bool_short_circuit(self):
+        self.success_case('bool-short-circuit', SHORT_CIRCUIT_OUTPUT)
+
     def test_comparison(self):
         self.success_case('comparison', OUTPUT_COMPARISON)
 
     def test_if0(self):
         self.success_case('if0', b'1\n10\n')
+
+    def test_if1(self):
+        self.success_case('if1', b'1\n20\n31\n30\n')
 
 class TestLet(common.CompyTestCase):
     def prefix(self) -> list[str]:
@@ -71,6 +80,38 @@ class TestLet(common.CompyTestCase):
     
     def test_nested(self):
         self.success_case('nested', b'9\nNone\n10\n7\n')
+
+LOGICAL0_OUTPUT = b'''False
+True
+True
+True
+False
+False
+False
+True
+'''
+
+SHORT_CIRCUIT_OUTPUT = b'''0
+1
+False
+0
+1
+True
+0
+True
+0
+True
+0
+False
+0
+False
+0
+1
+False
+0
+1
+True
+'''
 
 OUTPUT_COMPARISON = b'''None
 False

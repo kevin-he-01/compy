@@ -1,0 +1,18 @@
+var(a := input('a: '))
+var(b := input('b: '))
+if not (type(a) == int and type(b) == int):
+    print('Type error')
+    # TODO: exit(1)
+elif not (a >= 0 and b >= 0):
+    print('Integers must be non-negative')
+    # TODO: exit(1)
+else:
+    if b > a:
+        val(tmp := b)
+        b = a
+        a = tmp
+    while b != 0:
+        val(new_b := a % b)
+        a = b
+        b = new_b
+    print('gcd(a,b) =', a)

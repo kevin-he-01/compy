@@ -28,7 +28,7 @@ def parse_let(span: SourceSpan, binds: list[ast.expr], body: ast.expr) -> syn.Ex
                     raise CompileError(msg="Bindings before the body must be of the form x := <expr>", span=span_arg)
     return syn.mk_exprscope(span, list(iter_args()), parse_expr(body))
 
-def convert_binop(span: SourceSpan, op: ast.operator | ast.boolop) -> syn.BinOp:
+def convert_binop(span: SourceSpan, op: ast.operator) -> syn.BinOp:
     match op:
         case ast.Add():
             return syn.BinOp.ADD
@@ -40,10 +40,6 @@ def convert_binop(span: SourceSpan, op: ast.operator | ast.boolop) -> syn.BinOp:
             return syn.BinOp.DIV
         case ast.Mod():
             return syn.BinOp.MOD
-        case ast.And():
-            return syn.BinOp.AND
-        case ast.Or():
-            return syn.BinOp.OR
         case _: # pragma: no cover
             raise CompileError('Unsupported binary operation', span)
 
@@ -77,9 +73,21 @@ def convert_un_op(span: SourceSpan, op: ast.unaryop) -> syn.UnaryOp:
         case _: # pragma: no cover
             raise CompileError('Unsupported unary operation', span)
 
+def bool_op(span: SourceSpan, op: ast.boolop, left: syn.Expression, right: syn.Expression) -> syn.Expression:
+    # For non-short circuiting operations:
+    # return syn.Prim2(span=span, op=convert_binop(span, op), left=left, right=right)
+    # Short circuiting operations
+    match op:
+        case ast.And():
+            return syn.IfExpr(span, left, right, syn.Boolean(span, False))
+        case ast.Or():
+            return syn.IfExpr(span, left, syn.Boolean(span, True), right)
+        case _: # pragma: no cover
+            raise CompileError('Unsupported boolean operation', span)
+
 # Use left associativity since only boolean values are allowed
 def parse_boolop(span: SourceSpan, op: ast.boolop, first: syn.Expression, second: ast.expr, rest: list[ast.expr]) -> syn.Expression:
-    base = syn.Prim2(span=span, op=convert_binop(span, op), left=first, right=parse_expr(second))
+    base = bool_op(span, op, first, parse_expr(second))
     if rest:
         return parse_boolop(span, op, base, rest[0], rest[1:])
     else:
@@ -128,6 +136,8 @@ def parse_expr(ex: ast.expr) -> syn.Expression:
             return syn.Prim2(span=span, op=convert_binop(span, op), left=parse_expr(left), right=parse_expr(right))
         case ast.BoolOp(op=op, values=[first, second, *rest]):
             return parse_boolop(span, op, parse_expr(first), second, rest)
+        case ast.IfExp(test=test, body=body, orelse=orelse):
+            return syn.IfExpr(span=span, test=parse_expr(test), body=parse_expr(body), orelse=parse_expr(orelse))
         case ast.Compare(left=left, ops=[cmp_op], comparators=[right]):
             op, invert = convert_cmpop(span, cmp_op)
             base = syn.Prim2(span=span, op=op, left=parse_expr(left), right=parse_expr(right))
