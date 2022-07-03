@@ -2,10 +2,10 @@ var(i := 0)
 while i < 8:
     var(i_ = i)
     val(c := i_ % 2 > 0)
-    i_ = i_ / 2
+    i_ /= 2
     val(b := i_ % 2 > 0)
-    i_ = i_ / 2
+    i_ /= 2
     val(a := i_ % 2 > 0)
-    i_ = i_ / 2
+    i_ /= 2
     print('a b c', a, b, c, 'a&b&c', a and b and c, 'a|b|c', a or b or c)
-    i = i + 1
+    i += 1

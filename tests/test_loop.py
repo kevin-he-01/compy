@@ -11,12 +11,27 @@ class TestWhile(common.CompyTestCase):
 
     def test_fibo(self):
         self.success_case('fibo', stdout=FIBO_OUTPUT, stdin=b'100')
+
+    def test_pow_of_2(self):
+        self.success_case('pow-of-2', stdout=POW_OUTPUT)
     
     def test_gcd(self):
         self.success_case('gcd', stdout=b'a: b: gcd(a,b) = 169\n', stdin=b'2873\n3211\n')
 
     def test_truth_table(self):
         self.success_case('truth-table', TRUTH_TABLE_OUTPUT)
+
+POW_OUTPUT = b'''1
+2
+4
+8
+16
+32
+64
+128
+256
+512
+'''
 
 FIBO_OUTPUT = b'''0
 1

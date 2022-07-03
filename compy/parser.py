@@ -163,11 +163,11 @@ def parse_expr(ex: ast.expr) -> syn.Expression:
         case _: # pragma: no cover
             raise CompileError(msg=f"Unknown expression {ex}", span=span)
 
-def parse_assignment(span_stmt: SourceSpan, target: ast.expr, src: ast.expr) -> syn.Statement:
+def parse_assignment(span_stmt: SourceSpan, target: ast.expr, src: syn.Expression) -> syn.Statement:
     match target:
         case ast.Name(id=name):
             validate_name_ast(target)
-            return syn.Assignment(span=span_stmt, name=name, target_span=span_ast(target), src=parse_expr(src))
+            return syn.Assignment(span=span_stmt, name=name, target_span=span_ast(target), src=src)
         # TODO: assign to list elements, destructuring of tuples, etc.
         case _: # pragma: no cover
             raise CompileError(msg="Cannot assign to this target", span=span_ast(target))
@@ -199,7 +199,10 @@ def parse_statement(s: ast.stmt) -> syn.Statement:
         case ast.Expr(value=ex):
             return parse_stmt_expr(span, ex)
         case ast.Assign(targets=[x], value=v):
-            return parse_assignment(span, x, v)
+            return parse_assignment(span, x, parse_expr(v))
+        case ast.AugAssign(target=x, op=op, value=y):
+            return parse_assignment(span, x,
+                syn.Prim2(span=span, op=convert_binop(span, op), left=parse_expr(x), right=parse_expr(y)))
         case ast.Pass():
             return syn.NoOp(span=span)
         case ast.With(items=[ast.withitem(context_expr=ast.Name(id=kw.UNDERSCORE))], body=stmts):
