@@ -175,10 +175,8 @@ def parse_assignment(span_stmt: SourceSpan, target: ast.expr, src: ast.expr) -> 
 def parse_stmt_expr(span_stmt: SourceSpan, ex: ast.expr) -> syn.Statement:
     match ex:
         # Legacy val/var binding form (via Python keyword arguments): val(x = <expr>)
-        case ast.Call(func=ast.Name(id=(kw.VAL | kw.VAR as ty)), args=[], keywords=[ast.keyword(arg=name, value=ex) as keyword]):
+        case ast.Call(func=ast.Name(id=(kw.VAL | kw.VAR as ty)), args=[], keywords=[ast.keyword(arg=str(name), value=ex) as keyword]):
             mutable = ty == kw.VAR
-            if name is None:
-                raise CompileError('Bad val/var binding', span_stmt)
             validate_name(span_ast(keyword), name)
             return syn.Binding(span=span_stmt, mutable=mutable, name=name, init_val=parse_expr(ex))
         # Alternate val/var binding form: val(x := <expr>), functionally equivalent to above
@@ -190,6 +188,8 @@ def parse_stmt_expr(span_stmt: SourceSpan, ex: ast.expr) -> syn.Statement:
             mutable = ty == kw.VAR
             validate_name(span_ast(name), id_name)
             return syn.Binding(span=span_stmt, mutable=mutable, name=id_name, init_val=parse_expr(src))
+        case ast.Call(func=ast.Name(id=(kw.VAL | kw.VAR))):
+            raise CompileError('Bad val/var binding', span_stmt)
         case _:
             return syn.EvalExpr(span=span_stmt, expr=parse_expr(ex))
 
@@ -208,8 +208,8 @@ def parse_statement(s: ast.stmt) -> syn.Statement:
             return syn.IfStmt(span=span, test=parse_expr(test), body=parse_statements(body), orelse=parse_statements(orelse))
         case ast.While(test=test, body=body, orelse=[]):
             return syn.While(span=span, test=parse_expr(test), body=parse_statements(body))
-        case ast.While():
-            raise CompileError(msg='`while` with `else:` clause not supported yet', span=span) # pragma: no cover
+        case ast.While(): # pragma: no cover
+            raise CompileError(msg='`while` with `else:` clause not supported yet', span=span)
         case _: # pragma: no cover
             print(ast.dump(s, indent=2))
             raise CompileError(msg="Unknown statement", span=span)

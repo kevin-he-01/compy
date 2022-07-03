@@ -1,4 +1,4 @@
-from compy.common import ImmutableVarError, IntegerOOB, UnboundVarError
+from compy.common import CompileError, ImmutableVarError, IntegerOOB, UnboundVarError
 from tests import common
 
 CHECKER_PREFIX = 'checker'
@@ -40,3 +40,6 @@ class TestMisc(common.CompyTestCase):
 
     def test_assign_ub(self):
         self.compile_failure('assign-ub', UnboundVarError)
+    
+    def test_use_keyword(self):
+        self.compile_failure('use-keyword', CompileError)

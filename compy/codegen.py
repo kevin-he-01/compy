@@ -66,12 +66,6 @@ def read_var_at(stack_offset: int) -> CODE:
 def load_none() -> CODE:
     return [ mov(RVAL, Const(0)), mov(RTYPE, op_type(PrimType.NONE)) ]
 
-def sym_op(op: UnaryOp) -> Symbol:
-    return Symbol(op.symbol())
-
-def sym_binop(op: BinOp) -> Symbol:
-    return Symbol(op.symbol())
-
 def get_var_offset(name: Name) -> int:
     # TODO: when implementing closures, use effective offset from this call frame's stack
     return unwrap(name.info).get_stack_offset()

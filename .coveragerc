@@ -20,6 +20,9 @@ exclude_lines =
     # Don't complain about abstract methods, they aren't run:
     @(abc\.)?abstractmethod
 
+    # Will never be run at runtime
+    if TYPE_CHECKING:
+
 [run]
 omit =
     tests/*

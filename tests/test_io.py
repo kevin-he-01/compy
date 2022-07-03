@@ -31,6 +31,9 @@ class TestIO(common.CompyTestCase):
         self.success_case('input1', stdout=b'9223372036854775807\n-9223372036854775808\n0\n-42\nFalse\nbool\n',
             stdin=b'9223372036854775807\n-9223372036854775808\n-10000\nFalse\nbool\nFalse')
 
+    def test_input_e(self):
+        self.compile_failure('input-e', FuncArgsError)
+
     def test_input_prompt0(self):
         self.success_case('input-prompt0', b'None1337\n', stdin=b'1337\n')
 
