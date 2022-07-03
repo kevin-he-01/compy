@@ -205,13 +205,43 @@ class While(Statement):
     test: Expression
     body: Scope
 
-## Begin concrete AST expressions
+## Begin abstract AST expressions
+
+@dataclass
+class RuntimeCall(Expression):
+    args: IMM_EXPRS
+    
+    def func_name(self) -> str:
+        raise NotImplementedError
+    
+    def is_variadic(self) -> bool:
+        raise NotImplementedError
+    
+    # Validate self.args
+    # Return an error message or None (no error)
+    def check(self) -> str | None:
+        raise NotImplementedError
 
 class ConstLiteral(Expression):
     def type(self) -> PrimType:
         raise NotImplementedError
     def val(self) -> int: # Underlying representation
         raise NotImplementedError 
+
+## Begin concrete AST expressions
+
+@dataclass
+class FixedArityCall(RuntimeCall):
+    func_symbol: str # As in C
+    arity: int
+    def func_name(self) -> str:
+        return self.func_symbol
+    
+    def is_variadic(self) -> bool:
+        return False
+    
+    def check(self) -> str | None:
+        return None if len(self.args) == self.arity else f'expected {self.arity} argument(s) but given {len(self.args)}'
 
 @dataclass
 class ImmConstLiteral(Expression):

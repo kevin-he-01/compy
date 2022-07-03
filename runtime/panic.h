@@ -11,6 +11,7 @@ typedef long location_t; // for debug information
 // Add panic reasons here
 #define FOREACH_REASON(FUNC) \
     FUNC(TYPE_ERROR) \
+    FUNC(VALUE_ERROR) \
     FUNC(ARITH_OVERFLOW) \
     FUNC(DIV_BY_ZERO) \
     FUNC(EVAL_SYNTAX) \

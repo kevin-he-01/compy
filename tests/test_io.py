@@ -1,3 +1,4 @@
+from compy.common import FuncArgsError
 from tests import common
 
 IO_PREFIX = 'io'
@@ -56,3 +57,25 @@ None 11 None 12 None
 14 15 16 17 18 19 20
 14 15 16 17 18 19 20 21
 '''
+
+class TestRuntimeFuncs(common.CompyTestCase):
+    def prefix(self) -> list[str]:
+        return [IO_PREFIX, 'runtime']
+
+    def test_exit(self):
+        self.success_case('exit', stdout=b'', retcode=42)
+
+    def test_exit_e(self):
+        self.compile_failure('exit-e', FuncArgsError)
+
+    def test_sleep_e(self):
+        self.compile_failure('sleep-e', FuncArgsError)
+
+    def test_sleep(self):
+        self.success_case('sleep', b'None\n')
+    
+    def test_sleep_e2(self):
+        self.runtime_failure('sleep-e2', common.PanicReason.VALUE_ERROR)
+
+    def test_sleep_e3(self):
+        self.runtime_failure('sleep-e3', common.PanicReason.ARITH_OVERFLOW)

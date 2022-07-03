@@ -22,6 +22,7 @@ class AutoName(Enum):
 
 class PanicReason(AutoName):
     TYPE_ERROR = auto()
+    VALUE_ERROR = auto()
     ARITH_OVERFLOW = auto()
     DIV_BY_ZERO = auto()
     EVAL_SYNTAX = auto()

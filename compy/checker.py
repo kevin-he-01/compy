@@ -1,8 +1,8 @@
 from dataclasses import dataclass
-from compy.common import ArityMismatch, IntegerOOB
+from compy.common import FuncArgsError, IntegerOOB
 from compy.state import CompilerState
 
-from compy.syntax import Input, Integer, Node, NodeWalker
+from compy.syntax import Input, Integer, Node, NodeWalker, RuntimeCall
 
 
 INT_BITS = 64
@@ -30,6 +30,9 @@ class Checker(NodeWalker[None]):
                 # Integr is a leaf so no recursive walks
             case Input(args=args):
                 if len(args) not in {0, 1}:
-                    self.state.err(ArityMismatch(f"input() expects 0 or 1 position arguments but got {len(args)}", span=node.span))
+                    self.state.err(FuncArgsError(f"input() expects 0 or 1 position arguments but got {len(args)}", span=node.span))
+            case RuntimeCall():
+                if (err := node.check()) is not None:
+                    self.state.err(FuncArgsError(f"{node.func_name()}() {err}", span=node.span))
             case _:
                 return super().walk(node, ctx)

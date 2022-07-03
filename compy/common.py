@@ -87,7 +87,7 @@ class ImmutableVarError(CompileError):
     def __init__(self, var: ID, span: SourceSpan):
         super().__init__(f"Assignment to read-only variable (val or let) '{var}'", span)
 
-class ArityMismatch(CompileError):
+class FuncArgsError(CompileError):
     def __init__(self, msg: str, span: SourceSpan):
         super().__init__(msg, span) 
 

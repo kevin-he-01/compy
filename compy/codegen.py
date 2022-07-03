@@ -7,11 +7,12 @@ from compy.asm import (AsmLine, Const, Label, MemOperand, MemRel, Operand, Reg, 
                        mov, pop, push, ret, section, sub)
 from compy.common import (MAIN, CompiledFunction, CompilerInfo, PrimType, SourceSpan, concat,
                           unwrap)
+from compy.runtime import RUNTIME_SYMBOLS
 from compy.stack import op_stack
 from compy.syntax import (IMM_EXPR, IMM_EXPRS, Assignment, Binding, BinOp,
                           ConstLiteral, EvalExpr, Expression, ExprScope,
                           GetType, IfExpr, IfStmt, ImmConstLiteral, Input, Name, NewScope, NoOp, Prim1,
-                          Prim2, Print, Scope, Statement, StringLiteral, UnaryOp, VarInfo, While)
+                          Prim2, Print, RuntimeCall, Scope, Statement, StringLiteral, UnaryOp, VarInfo, While)
 
 CODE = Iterable[AsmLine]
 
@@ -158,6 +159,8 @@ def compile_expr(ex: Expression) -> CODE:
             return call_runtime_func(PRINT_VARARGS, True, [Direct(Const(lineno)), Direct(Const(len(args))), *imms2args(args)])
         case Input(args=args, span=SourceSpan(lineno=lineno)):
             return call_runtime_func(INPUT, False, [Direct(Const(lineno)), imm2arg(args[0]) if args else NULL_ARG])
+        case RuntimeCall(args=args, span=SourceSpan(lineno=lineno)):
+            return call_runtime_func(ex.func_name(), ex.is_variadic(), [Direct(Const(lineno)), *imms2args(args)])
         case ExprScope(scope=scope):
             return compile_scope(scope)
         case IfExpr(test=test, body=body, orelse=orelse, span=SourceSpan(lineno=lineno)):
@@ -239,6 +242,7 @@ def compile_prog_iter(info: CompilerInfo, funcs: list[CompiledFunction]) -> CODE
         extern(EXTRACT_BOOL),
         extern(PRINT_VARARGS),
         extern(INPUT),
+        *(extern(sym) for sym in RUNTIME_SYMBOLS),
         section('.rodata'),
         *info.state.string_pool.to_asm(),
         *info.state.const_pool.to_asm(),

@@ -2,6 +2,7 @@ import ast
 from typing import Iterable
 
 import compy.keywords as kw
+from compy.runtime import FIXED_ARITY_FUNCS
 import compy.syntax as syn
 from compy.common import ID, CompileError, SourceSpan
 
@@ -93,6 +94,27 @@ def parse_boolop(span: SourceSpan, op: ast.boolop, first: syn.Expression, second
     else:
         return base
 
+def parse_call(ex: ast.Call):
+    span = span_ast(ex)
+    match ex:
+        case ast.Call(func=ast.Name(id=kw.TYPE), args=[ex1], keywords=[]):
+            return syn.GetType(span=span, ex=parse_expr(ex1))
+        case ast.Call(func=ast.Name(id=kw.PRINT), args=exs, keywords=[]):
+            return syn.Print(span=span, args=[parse_expr(ex) for ex in exs])
+        case ast.Call(func=ast.Name(id=kw.INPUT), args=exs, keywords=[]):
+            return syn.Input(span=span, args=[parse_expr(ex) for ex in exs])
+        case ast.Call(func=ast.Name(id=(kw.ADD1 | kw.SUB1 as func)), args=[ex1], keywords=[]):
+            return syn.Prim1(span=span, op=kw.KW_UNARY_OPS[func], ex1=parse_expr(ex1))
+        case ast.Call(func=ast.Name(id=name), args=args, keywords=kws):
+            if name in FIXED_ARITY_FUNCS:
+                sym_name, arity = FIXED_ARITY_FUNCS[name]
+                if kws:
+                    raise CompileError(msg=f'{name}() does not take keyword arguments', span=span)
+                return syn.FixedArityCall(span=span, args=[parse_expr(ex) for ex in args], func_symbol=sym_name, arity=arity)
+            raise CompileError(msg='User-defined function call not supported yet', span=span) # pragma: no cover
+        case ast.Call(): # pragma: no cover
+            raise CompileError(msg='Calling arbitrary expressions (function as values) not supported yet', span=span)
+
 def parse_expr(ex: ast.expr) -> syn.Expression:
     span = span_ast(ex)
     match ex:
@@ -118,14 +140,6 @@ def parse_expr(ex: ast.expr) -> syn.Expression:
                 # TODO: bytes
                 case _: # pragma: no cover
                     raise CompileError(msg=f"Unknown literal {v}", span=span)
-        case ast.Call(func=ast.Name(id=kw.TYPE), args=[ex1], keywords=[]):
-            return syn.GetType(span=span, ex=parse_expr(ex1))
-        case ast.Call(func=ast.Name(id=kw.PRINT), args=exs, keywords=[]):
-            return syn.Print(span=span, args=[parse_expr(ex) for ex in exs])
-        case ast.Call(func=ast.Name(id=kw.INPUT), args=exs, keywords=[]):
-            return syn.Input(span=span, args=[parse_expr(ex) for ex in exs])
-        case ast.Call(func=ast.Name(id=(kw.ADD1 | kw.SUB1 as func)), args=[ex1], keywords=[]):
-            return syn.Prim1(span=span, op=kw.KW_UNARY_OPS[func], ex1=parse_expr(ex1))
         case ast.Call(func=ast.Name(id=kw.LET), args=[*binds, body], keywords=[]):
             return parse_let(span, binds, body)
         case ast.UnaryOp(op=ast.USub(), operand=ast.Constant(value=int(x))):
@@ -144,6 +158,8 @@ def parse_expr(ex: ast.expr) -> syn.Expression:
             return syn.Prim1(span, syn.UnaryOp.NOT, base) if invert else base
         case ast.Compare():
             raise CompileError(msg="Cannot chain multiple comparisons like in Python", span=span)
+        case ast.Call():
+            return parse_call(ex)
         case _: # pragma: no cover
             raise CompileError(msg=f"Unknown expression {ex}", span=span)
 
